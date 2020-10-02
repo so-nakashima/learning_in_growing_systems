@@ -10,11 +10,14 @@ World_MBPRE::~World_MBPRE(){
 
 void World_MBPRE::excecute(){
     for(int t = 0; t != end_time; t++){
+        //record (this is first in order to record t = 0)
+        record_environments();
+
         time_evolution();
 
-        //record
-        record_environments();
     }
+
+    record_environments();
 }
 
 void World_MBPRE::time_evolution(){
@@ -76,7 +79,7 @@ Environments::Environments(const int cardinality , const std::vector<double>& in
 
     set_cardinality(cardinality);
 
-    if(!std::vector<int>().empty()){
+    if(!initial.empty()){
         set_initial_distribution(initial);
     }
     else{
