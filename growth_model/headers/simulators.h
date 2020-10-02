@@ -2,6 +2,9 @@
 #include <random>
 #include <iostream>
 #include <fstream>
+#include <string>
+#include <cassert>
+#include <limits>
 
 class Environments
 {
@@ -28,8 +31,61 @@ public:
     void set_cardinality(int n);
     void set_transition(const std::vector<std::vector<double>>& tran_mat);
     int next_state();
+    void record(std::ofstream* out);
 };
 
+class Cell
+{
+private:
+    int m_type;
+    std::string m_ID; //<hoge>i means this cell is the i-th (0-origin) daughter of the cell with ID <hoge>
+public:
+    Cell(int type = 0, std::string ID = "");
+    ~Cell();
+
+    std::vector<Cell> daughters(int current_env, const std::vector<std::vector<double>>& type_transition, const std::vector<std::vector<double>>& offspring_distribution,
+    std::mt19937_64& mt);
+
+    void record(std::ofstream* out_population);
+};
+
+
+
+class Population
+{
+public:
+
+    virtual void time_evolution(int current_env){};
+    virtual void record(std::ofstream* out_population){};
+};
+
+class Cells : public Population
+{
+private:
+    int type_cardinality;
+    std::vector<std::vector<double>> type_transition; //type_transiton[i][j] = prob. of type transition from i to j
+    std::vector<std::vector<double>> offspring_distribution; //offspring_distribution[i][j] = prob. of type-i-cell having j daughters.
+    int maximum_population_size; 
+    std::vector<Cell> current_population;
+    std::mt19937_64 mt;
+
+public:
+    Cells(int type_no = 1, 
+    const std::vector<std::vector<double>>& type_tran = std::vector<std::vector<double>>(), 
+    const std::vector<std::vector<double>>& offsprings_prob = std::vector<std::vector<double>>(),
+    const std::vector<Cell>& initial_population = std::vector<Cell>(),int max_pop_size = std::numeric_limits<int>::max()
+    );
+    ~Cells();
+
+    void set_type_cardinality(int n);
+    void set_type_transition(const std::vector<std::vector<double>>& transit);
+    void set_offspring_distribution(const std::vector<std::vector<double>>& offspring_dist);
+    void set_maximum_population_size(int n);
+    void set_initial_population(const std::vector<Cell>& initial_population);
+
+    void time_evolution(int current_env);
+    void record(std::ofstream* out_population);
+};
 
 
 class World_base{
@@ -49,15 +105,18 @@ public:
     //set intial state
     void set_environments(const Environments& enviornments){env = enviornments;};
     void set_env_record(std::ofstream* out){out_env = out;};
-    void set_end_time(int t){end_time = t;};
-
+    void set_end_time(int t){assert(t > 0); end_time = t;};
+    void set_population(Population* population);
+    void set_pop_record(std::ofstream* out){out_pop = out;};
 
 private:
     Environments env;
+    Population* pop;
     void time_evolution();
-    void record_environments();
     int end_time = 10;
     std::ofstream* out_env;
+    std::ofstream* out_pop;
+    void record();
 };
 
 

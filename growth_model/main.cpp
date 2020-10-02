@@ -7,5 +7,5 @@ using namespace std;
 
 int main()
 {
-   test_env();
+   test_env_cells();
 }  
