@@ -2,7 +2,7 @@
 #include <vector>
 
 void test_env(){
-    World_MBPRE w;
+    MBPRE w;
 
     w.set_end_time(30);
     
@@ -18,13 +18,13 @@ void test_env(){
 }
 
 void test_env_cells(){
-        World_MBPRE w;
+        MBPRE w;
 
     w.set_end_time(20);
     
     //env
     std::vector<double> init = {1.0, 1.0};
-    std::vector<std::vector<double>> env_tran = {{1.0, 0}, {0.5, 0.5}};
+    std::vector<std::vector<double>> env_tran = {{0.5, 0.5}, {0.5, 0.5}};
     Environments env(2, init, env_tran);
 
     std::ofstream out_env(".//res//environments.dat");
@@ -33,15 +33,20 @@ void test_env_cells(){
 
 
     //cells
-    std::vector<std::vector<double>> replication = {{0.0, 1.0},{0.0, 1.0}};
-    std::vector<std::vector<double>> type_tran = {{0.5, 0.5}, {0.5,0.5}};
-    std::vector<Cell> init_pop = {Cell(0, "0"), Cell(0, "1")};
+    std::vector<std::vector<double>> type_tran = {{0.8, 0.2}, {0.2,0.8}};
+    std::vector<Cell> init_pop = {Cell(0, "0")};//, Cell(0, "1")};
 
-    Cells cells(2, type_tran, replication, init_pop);
+    Cells cells(2, type_tran, init_pop);
     std::ofstream out_pop(".//res//population.dat");
+    cells.set_maximum_population_size(5);
 
     w.set_population(&cells);
     w.set_pop_record(&out_pop);
+
+
+    //replication
+    std::vector<std::vector<std::vector<double>>> replication = {{{0.0, 0.0, 1.0}, {0.0, 0.0, 1.0}}, {{0.0, 0.0, 1.0},{0.0, 0.0, 1.0}}};
+    w.set_offspring_distributions(replication);
 
     w.excecute();
 }

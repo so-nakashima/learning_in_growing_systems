@@ -10,7 +10,7 @@ class Environments
 {
 private:
     //initial data
-    int cardinality = 1;
+    int m_cardinality = 1;
     std::vector<std::vector<double>> transition; //transition[i][j] = prob. of the transition form i to j.
     //std::vector<int> initial_distribution = std::vector<int>(1, 1);
 
@@ -25,6 +25,7 @@ public:
     ~Environments();
 
     const int current_state(){return m_current_state;};
+    const int cardinality(){return m_cardinality;}
 
     //void set_initial(int init);
     void set_initial_distribution(const std::vector<double>& init);
@@ -43,8 +44,10 @@ public:
     Cell(int type = 0, std::string ID = "");
     ~Cell();
 
-    std::vector<Cell> daughters(int current_env, const std::vector<std::vector<double>>& type_transition, const std::vector<std::vector<double>>& offspring_distribution,
+    std::vector<Cell> daughters(const std::vector<std::vector<double>>& type_transition, const std::vector<std::vector<double>>& offspring_distribution,
     std::mt19937_64& mt);
+
+    const int type(){return m_type;}
 
     void record(std::ofstream* out_population);
 };
@@ -54,9 +57,9 @@ public:
 class Population
 {
 public:
-
-    virtual void time_evolution(int current_env){};
+    virtual void time_evolution(const std::vector<std::vector<double>>& offspring_distribution){};
     virtual void record(std::ofstream* out_population){};
+    const virtual  int cardinality(){return 0;};
 };
 
 class Cells : public Population
@@ -71,20 +74,20 @@ private:
 
 public:
     Cells(int type_no = 1, 
-    const std::vector<std::vector<double>>& type_tran = std::vector<std::vector<double>>(), 
-    const std::vector<std::vector<double>>& offsprings_prob = std::vector<std::vector<double>>(),
+    const std::vector<std::vector<double>>& type_tran = std::vector<std::vector<double>>(),
     const std::vector<Cell>& initial_population = std::vector<Cell>(),int max_pop_size = std::numeric_limits<int>::max()
     );
     ~Cells();
 
     void set_type_cardinality(int n);
     void set_type_transition(const std::vector<std::vector<double>>& transit);
-    void set_offspring_distribution(const std::vector<std::vector<double>>& offspring_dist);
     void set_maximum_population_size(int n);
     void set_initial_population(const std::vector<Cell>& initial_population);
 
-    void time_evolution(int current_env);
+    void time_evolution(const std::vector<std::vector<double>>& offspring_distribution);
     void record(std::ofstream* out_population);
+
+    const int cardinality(){return type_cardinality;};
 };
 
 
@@ -93,11 +96,11 @@ public:
     virtual void execute() {};   
 };
 
-class World_MBPRE : public World_base
+class MBPRE : public World_base
 {
 public:
-    World_MBPRE(/* args */);
-    ~World_MBPRE();
+    MBPRE(/* args */);
+    ~MBPRE();
 
     //run simulation
     void excecute();
@@ -108,6 +111,7 @@ public:
     void set_end_time(int t){assert(t > 0); end_time = t;};
     void set_population(Population* population);
     void set_pop_record(std::ofstream* out){out_pop = out;};
+    void set_offspring_distributions(const std::vector<std::vector<std::vector<double>>>& offspring_dist); //offspring_dist[y][x][i] = prob of type-x cell having i daughters under env. y.
 
 private:
     Environments env;
@@ -117,6 +121,7 @@ private:
     std::ofstream* out_env;
     std::ofstream* out_pop;
     void record();
+    std::vector<std::vector<std::vector<double>>> offspring_distributions;
 };
 
 

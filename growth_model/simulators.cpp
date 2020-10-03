@@ -1,14 +1,16 @@
 #include "headers/simulators.h"
 #include <cassert>
+#include <algorithm>
+#include <iterator>
 
-World_MBPRE::World_MBPRE(){
+MBPRE::MBPRE(){
 }
 
-World_MBPRE::~World_MBPRE(){
+MBPRE::~MBPRE(){
 
 }
 
-void World_MBPRE::excecute(){
+void MBPRE::excecute(){
     for(int t = 0; t != end_time; t++){
         //record (this is first in order to record t = 0)
         record();
@@ -18,31 +20,44 @@ void World_MBPRE::excecute(){
     }
     record();
 }
-void World_MBPRE::record(){
+void MBPRE::record(){
     env.record(out_env);
     pop->record(out_pop);
 }
 
-void World_MBPRE::time_evolution(){
-    //environments
-    int nowstate = env.next_state();
-
+void MBPRE::time_evolution(){
     //population
-    pop->time_evolution(nowstate);
+    pop->time_evolution(offspring_distributions[env.current_state()]);
+
+    env.next_state();
 }
 
 
 
-void World_MBPRE::set_population(Population* population){
+void MBPRE::set_population(Population* population){
     pop = population;
+}
+
+void MBPRE::set_offspring_distributions(const std::vector<std::vector<std::vector<double>>>& offspring_dist){
+    assert(offspring_dist.size() == env.cardinality());
+    for(int y = 0; y != env.cardinality(); y++){
+        assert(offspring_dist[y].size() == pop->cardinality());
+        for(int x = 0; x != pop->cardinality(); x++){
+            assert(!offspring_dist[y][x].empty());
+            for(auto z : offspring_dist[y][x]){
+                assert(z >= 0);
+            }
+        }
+    }
+    offspring_distributions = offspring_dist;
 }
 
 Environments::~Environments(){
 }
 
 void Environments::set_initial_distribution(const std::vector<double>& init){
-    assert(init.size() == cardinality);
-    for(int i = 0; i != cardinality; i++){
+    assert(init.size() == m_cardinality);
+    for(int i = 0; i != m_cardinality; i++){
         assert(init[i] >= 0);
     }
 
@@ -52,14 +67,14 @@ void Environments::set_initial_distribution(const std::vector<double>& init){
 
 void Environments::set_cardinality(int n){
     assert(n > 0);
-    cardinality = n;
+    m_cardinality = n;
 }
 
 void Environments::set_transition(const std::vector<std::vector<double>>& tran_mat){
-    assert(tran_mat.size () == cardinality);
-    for(int i = 0; i != cardinality; i++){
-        assert(tran_mat[i].size() == cardinality);
-        for(int j = 0; j != cardinality; j++){
+    assert(tran_mat.size() == m_cardinality);
+    for(int i = 0; i != m_cardinality; i++){
+        assert(tran_mat[i].size() == m_cardinality);
+        for(int j = 0; j != m_cardinality; j++){
             assert(tran_mat[i][j] >= 0);
         }
     }
@@ -118,7 +133,7 @@ Cell::~Cell()
 {
 }
 
-std::vector<Cell> Cell::daughters(int current_env, const std::vector<std::vector<double>>& type_transition, const std::vector<std::vector<double>>& offspring_distribution, std::mt19937_64& mt){
+std::vector<Cell> Cell::daughters(const std::vector<std::vector<double>>& type_transition, const std::vector<std::vector<double>>& offspring_distribution, std::mt19937_64& mt){
 
     int no_offsprings = std::discrete_distribution<int>(offspring_distribution[m_type].begin(), offspring_distribution[m_type].end())(mt);
 
@@ -137,7 +152,6 @@ void Cell::record(std::ofstream* out_population){
 
 Cells::Cells(int type_no, 
     const std::vector<std::vector<double>>& type_tran, 
-    const std::vector<std::vector<double>>& offsprings_prob,
     const std::vector<Cell>& initial_population,int max_pop_size)
 {
     set_maximum_population_size(max_pop_size);
@@ -150,14 +164,6 @@ Cells::Cells(int type_no,
     else
     {
         set_type_transition(type_tran);
-    }
-
-    if(offsprings_prob.empty()){
-        set_offspring_distribution(std::vector<std::vector<double>>(type_cardinality, std::vector<double>(1,0.0)));
-    }
-    else
-    {
-        set_offspring_distribution(offsprings_prob);
     }
 
     //random generator
@@ -183,14 +189,6 @@ void Cells::set_type_transition(const std::vector<std::vector<double>>& transit)
     type_transition = transit;
 }
 
-void Cells::set_offspring_distribution(const std::vector<std::vector<double>>& offspring_dist){
-    assert(offspring_dist.size() == type_cardinality);
-    for(int i = 0; i != type_cardinality; i++){
-        assert(0 < offspring_dist[i].size() && offspring_dist[i].size() <= type_cardinality);
-    }
-
-    offspring_distribution = offspring_dist;
-}
 
 void Cells::set_maximum_population_size(int n){
     assert(n > 0);
@@ -198,21 +196,28 @@ void Cells::set_maximum_population_size(int n){
 }
 
 void Cells::set_initial_population(const std::vector<Cell>& initial_population){
+    for(auto cell : initial_population){
+        assert(cell.type() < type_cardinality);
+    }
     current_population = initial_population;
 }
 
-void Cells::time_evolution(int current_env){
+void Cells::time_evolution(const std::vector<std::vector<double>>& offspring_distribution){
     std::vector<Cell> new_population;
     for(auto cell : current_population){
-        std::vector<Cell> daughters = cell.daughters(current_env, type_transition, offspring_distribution, mt);
+        std::vector<Cell> daughters = cell.daughters(type_transition, offspring_distribution, mt);
 
         new_population.insert(new_population.end(), daughters.begin(), daughters.end());
     }
 
-    current_population = new_population;
+    current_population.clear();
 
-    if(current_population.size() > maximum_population_size){
-        //to be implemented
+    if(new_population.size() > maximum_population_size){
+        std::sample(new_population.begin(), new_population.end(), std::back_inserter(current_population), maximum_population_size, mt);
+    }
+    else
+    {
+        current_population = new_population;
     }
 }
 
