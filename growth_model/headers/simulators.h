@@ -61,7 +61,8 @@ class Population
 public:
     virtual void time_evolution(const std::vector<std::vector<double>>& offspring_distribution){};
     virtual void record(std::ofstream* out_population){};
-    const virtual  int cardinality(){return 0;};
+    const virtual int cardinality(){return 0;}; //no of type
+    const virtual int size(){return 0;}; //no of cells
 };
 
 class Cells : public Population
@@ -89,6 +90,7 @@ public:
     void record(std::ofstream* out_population);
 
     const int cardinality(){return type_cardinality;};
+    const int size(){return current_population.size();}
 };
 
 
@@ -115,6 +117,7 @@ public:
     void set_pop_record(std::ofstream* out){out_pop = out;};
     //void set_pop_record(std::string paht_out);
     void set_offspring_distributions(const std::vector<std::vector<std::vector<double>>>& offspring_dist); //offspring_dist[y][x][i] = prob of type-x cell having i daughters under env. y.
+    const int size_population(){return pop->size();}
 
 private:
     Environments env;

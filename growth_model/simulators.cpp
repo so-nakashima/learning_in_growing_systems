@@ -11,6 +11,17 @@ MBPRE::~MBPRE(){
 }
 
 void MBPRE::excecute(){
+    assert(offspring_distributions.size() == env.cardinality());
+    for(int y = 0; y != env.cardinality(); y++){
+        assert(offspring_distributions[y].size() == pop->cardinality());
+        for(int x = 0; x != pop->cardinality(); x++){
+            assert(!offspring_distributions[y][x].empty());
+            for(auto z : offspring_distributions[y][x]){
+                assert(z >= 0);
+            }
+        }
+    }
+
     for(int t = 0; t != end_time; t++){
         //record (this is first in order to record t = 0)
         record();
@@ -39,16 +50,6 @@ void MBPRE::set_population(Population* population){
 }
 
 void MBPRE::set_offspring_distributions(const std::vector<std::vector<std::vector<double>>>& offspring_dist){
-    assert(offspring_dist.size() == env.cardinality());
-    for(int y = 0; y != env.cardinality(); y++){
-        assert(offspring_dist[y].size() == pop->cardinality());
-        for(int x = 0; x != pop->cardinality(); x++){
-            assert(!offspring_dist[y][x].empty());
-            for(auto z : offspring_dist[y][x]){
-                assert(z >= 0);
-            }
-        }
-    }
     offspring_distributions = offspring_dist;
 }
 
@@ -239,3 +240,5 @@ void Cells::record(std::ofstream* out_population){
         cell.record(out_population);
     }
 }
+
+

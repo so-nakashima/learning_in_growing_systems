@@ -53,24 +53,33 @@ void test_env_cells(){
 }
 
 void file_read_test(){
-    MBPRE w;
+    //initialize world setting
+    std::ifstream in_other(".//experiments//sim_1//world_other.dat");
+    MBPRE w = read_mbpre(in_other);
+
+
     std::ifstream in_env(".//experiments//sim_1//env.dat");
     Environments env = read_env(in_env);
     std::ifstream in_cells(".//experiments//sim_1//initial_cells.dat");
     std::ifstream in_cell_tran(".//experiments//sim_1//cell_type_tran.dat");
     Cells cells = read_cells(in_cells, in_cell_tran);
 
-    w.set_end_time(10);
+
+    //replication
+    std::vector<std::vector<std::vector<double>>> replication;
+    std::ifstream in_repl(".//experiments//sim_1//replication.dat");
+    read3DTensor<double>(replication, in_repl);
+    w.set_offspring_distributions(replication);
+     
+    
+
+    //record
     std::ofstream out_env(".//experiments//sim_1//res//env.dat");
     w.set_env_record(&out_env);
     w.set_environments(env);
     w.set_population(&cells);
     std::ofstream out_pop(".//experiments//sim_1//res//pop.dat");
     w.set_pop_record(&out_pop);
-
-    //replication
-    std::vector<std::vector<std::vector<double>>> replication = {{{0.0, 0.0, 1.0}, {0.0, 0.0, 1.0}}, {{0.0, 0.0, 1.0},{0.0, 0.0, 1.0}}};
-    w.set_offspring_distributions(replication);
 
     w.excecute();
 }
