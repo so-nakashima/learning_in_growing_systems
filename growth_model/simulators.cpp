@@ -52,6 +52,19 @@ void MBPRE::set_offspring_distributions(const std::vector<std::vector<std::vecto
     offspring_distributions = offspring_dist;
 }
 
+/*
+void MBPRE::set_env_record(std::string path_out){
+    std::ofstream out(path_out);
+    set_env_record(&out);
+}
+
+void MBPRE::set_pop_record(std::string path_out){
+    std::ofstream out(path_out);
+    set_pop_record(&out);
+}*/
+
+
+
 Environments::~Environments(){
 }
 

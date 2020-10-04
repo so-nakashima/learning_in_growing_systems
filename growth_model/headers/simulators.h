@@ -1,3 +1,5 @@
+#pragma once
+
 #include<vector>
 #include <random>
 #include <iostream>
@@ -67,7 +69,6 @@ class Cells : public Population
 private:
     int type_cardinality;
     std::vector<std::vector<double>> type_transition; //type_transiton[i][j] = prob. of type transition from i to j
-    std::vector<std::vector<double>> offspring_distribution; //offspring_distribution[i][j] = prob. of type-i-cell having j daughters.
     int maximum_population_size; 
     std::vector<Cell> current_population;
     std::mt19937_64 mt;
@@ -108,9 +109,11 @@ public:
     //set intial state
     void set_environments(const Environments& enviornments){env = enviornments;};
     void set_env_record(std::ofstream* out){out_env = out;};
+    //void set_env_record(std::string path_out);
     void set_end_time(int t){assert(t > 0); end_time = t;};
     void set_population(Population* population);
     void set_pop_record(std::ofstream* out){out_pop = out;};
+    //void set_pop_record(std::string paht_out);
     void set_offspring_distributions(const std::vector<std::vector<std::vector<double>>>& offspring_dist); //offspring_dist[y][x][i] = prob of type-x cell having i daughters under env. y.
 
 private:

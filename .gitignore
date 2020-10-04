@@ -1,4 +1,4 @@
 .vscode/*
 *.out
 *.dat
-matplotlibcpp.h
+growth_model/experiments/*
