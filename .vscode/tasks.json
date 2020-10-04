@@ -5,7 +5,7 @@
         "type": "shell",
         "label": "g++ build active file",
         "command": "/usr/bin/g++",
-        "args": ["-g", "${fileDirname}/*.cpp", "-o", "${fileDirname}/a.out", "-std=c++17"],
+        "args": ["-g", "${fileDirname}/*.cpp", "-o", "${fileDirname}/a.out", "-std=c++17", "-I/usr/include/python3.8", "-lpython3.8"],
         "options": {
           "cwd": "/usr/bin"
         },

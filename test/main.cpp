@@ -1,16 +1,11 @@
-#include <iostream>
-#include <vector>
-#include <string>
+#include "../matplotlibcpp.h"
 
-using namespace std;
+namespace plt = matplotlibcpp;
 
-int main()
-{
-   vector<string> msg {"Hello", "C++", "World", "from", "VS Code", "and the C++ extension!"};
+int main() {
+    plt::plot({1,3,2,4});
 
-   for (const string& word : msg)
-   {
-      cout << word << " ";
-   }
-   cout << endl;
+    plt::save("./basic.png");
+
+    plt::show();
 }

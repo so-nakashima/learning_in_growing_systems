@@ -6,7 +6,8 @@
                 "${workspaceFolder}/**",
                 "/usr/bin",
                 "/usr/include/linux",
-                "/usr/local/include"
+                "/usr/local/include",
+                "/usr/include/python3.8"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
