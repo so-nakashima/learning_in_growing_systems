@@ -11,6 +11,7 @@ MBPRE::~MBPRE(){
 }
 
 void MBPRE::excecute(){
+    //check offspring_distributions is valid
     assert(offspring_distributions.size() == env.cardinality());
     for(int y = 0; y != env.cardinality(); y++){
         assert(offspring_distributions[y].size() == pop->cardinality());
@@ -22,15 +23,19 @@ void MBPRE::excecute(){
         }
     }
 
+
+    //run simulation
     for(int t = 0; t != end_time; t++){
         //record (this is first in order to record t = 0)
         record();
+        pop->record(out_pop_full);
 
         time_evolution();
 
     }
     record();
 }
+
 void MBPRE::record(){
     env.record(out_env);
     pop->record(out_pop);
@@ -39,7 +44,10 @@ void MBPRE::record(){
 void MBPRE::time_evolution(){
     //population
     pop->time_evolution(offspring_distributions[env.current_state()]);
+    pop->record(out_pop_full); //record to-be-discored cells in advance of selection.
+    pop->selection();
 
+    //environment
     env.next_state();
 }
 
@@ -225,13 +233,15 @@ void Cells::time_evolution(const std::vector<std::vector<double>>& offspring_dis
     }
 
     current_population.clear();
+    current_population = new_population;
+}
 
-    if(new_population.size() > maximum_population_size){
-        std::sample(new_population.begin(), new_population.end(), std::back_inserter(current_population), maximum_population_size, mt);
-    }
-    else
-    {
-        current_population = new_population;
+void Cells::selection(){
+    if(current_population.size() > maximum_population_size){
+        std::vector<Cell> temp;
+
+        std::sample(current_population.begin(), current_population.end(), std::back_inserter(temp), maximum_population_size, mt);
+        current_population = temp;
     }
 }
 

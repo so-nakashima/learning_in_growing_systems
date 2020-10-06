@@ -50,6 +50,7 @@ public:
     std::mt19937_64& mt);
 
     const int type(){return m_type;}
+    const std::string id(){return m_ID;}
 
     void record(std::ofstream* out_population);
 };
@@ -62,7 +63,8 @@ public:
     virtual void time_evolution(const std::vector<std::vector<double>>& offspring_distribution){};
     virtual void record(std::ofstream* out_population){};
     const virtual int cardinality(){return 0;}; //no of type
-    const virtual int size(){return 0;}; //no of cells
+    const virtual int size(){return 0;}; //no of cells 
+    virtual void selection(){};
 };
 
 class Cells : public Population
@@ -71,8 +73,8 @@ private:
     int type_cardinality;
     std::vector<std::vector<double>> type_transition; //type_transiton[i][j] = prob. of type transition from i to j
     int maximum_population_size; 
-    std::vector<Cell> current_population;
     std::mt19937_64 mt;
+    std::vector<Cell> current_population;
 
 public:
     Cells(int type_no = 1, 
@@ -87,6 +89,7 @@ public:
     void set_initial_population(const std::vector<Cell>& initial_population);
 
     void time_evolution(const std::vector<std::vector<double>>& offspring_distribution);
+    void selection();
     void record(std::ofstream* out_population);
 
     const int cardinality(){return type_cardinality;};
@@ -115,9 +118,14 @@ public:
     void set_end_time(int t){assert(t > 0); end_time = t;};
     void set_population(Population* population);
     void set_pop_record(std::ofstream* out){out_pop = out;};
+    void set_pop_full_record(std::ofstream* out){out_pop_full = out;};
     //void set_pop_record(std::string paht_out);
     void set_offspring_distributions(const std::vector<std::vector<std::vector<double>>>& offspring_dist); //offspring_dist[y][x][i] = prob of type-x cell having i daughters under env. y.
     const int size_population(){return pop->size();}
+
+    //history of the simulation
+    //std::vector<int> enviornments_history; //hoge[i] is the i-the env. state
+    //std::vector<std::vector<Cell>> population_history; //hoge[i] is the i-th current population.
 
 private:
     Environments env;
@@ -126,6 +134,7 @@ private:
     int end_time = 10;
     std::ofstream* out_env;
     std::ofstream* out_pop;
+    std::ofstream* out_pop_full; //when max_pop_size is introduced, record the discarded cell in addition to the selected cells.
     void record();
     std::vector<std::vector<std::vector<double>>> offspring_distributions;
 };

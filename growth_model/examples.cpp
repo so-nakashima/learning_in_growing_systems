@@ -39,10 +39,12 @@ void test_env_cells(){
 
     Cells cells(2, type_tran, init_pop);
     std::ofstream out_pop(".//res//population.dat");
+    std::ofstream out_pop_full(".//res//population_full.dat");
     cells.set_maximum_population_size(5);
 
     w.set_population(&cells);
     w.set_pop_record(&out_pop);
+    w.set_pop_full_record(&out_pop_full);
 
 
     //replication
@@ -79,7 +81,9 @@ void file_read_test(){
     w.set_environments(env);
     w.set_population(&cells);
     std::ofstream out_pop(".//experiments//sim_1//res//pop.dat");
+    std::ofstream out_pop_full(".//experiments//sim_1//res//pop_full.dat");
     w.set_pop_record(&out_pop);
+    w.set_pop_full_record(&out_pop_full);
 
     w.excecute();
 }
