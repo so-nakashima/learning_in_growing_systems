@@ -47,10 +47,10 @@ public:
     ~Cell();
 
     std::vector<Cell> daughters(const std::vector<std::vector<double>>& type_transition, const std::vector<std::vector<double>>& offspring_distribution,
-    std::mt19937_64& mt);
+    std::mt19937_64& mt) const ;
 
-    const int type(){return m_type;}
-    const std::string id(){return m_ID;}
+    int type() const {return m_type;}
+    std::string id() const {return m_ID;}
 
     void record(std::ofstream* out_population);
 };
@@ -99,7 +99,7 @@ public:
 
 class World_base{
 public:
-    virtual void execute() {};   
+    virtual void execute(){};   
 };
 
 class MBPRE : public World_base

@@ -8,4 +8,7 @@ using namespace std;
 int main()
 {
    file_read_test();
+   test_analyze();
+
+   //lambda_curve();
 }  

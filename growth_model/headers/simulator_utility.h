@@ -96,13 +96,7 @@ void readMat(int n, int m, std::vector<std::vector<T>>& mat, std::ifstream& in){
 
 
 
-template<typename T>
-void readVec(std::vector<T>& vec, std::ifstream& in){ 
 
-    int n;
-    in >> n;
-    readVec(n, vec, in);
-}
 
 template<typename T>
 void readVec(int n, std::vector<T>& vec, std::ifstream& in){ 
@@ -112,6 +106,14 @@ void readVec(int n, std::vector<T>& vec, std::ifstream& in){
        in >> temp;
        vec.push_back(temp);
     }   
+}
+
+template<typename T>
+void readVec(std::vector<T>& vec, std::ifstream& in){ 
+
+    int n;
+    in >> n;
+    readVec(n, vec, in);
 }
 
 template<typename T>

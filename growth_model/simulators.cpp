@@ -155,7 +155,7 @@ Cell::~Cell()
 {
 }
 
-std::vector<Cell> Cell::daughters(const std::vector<std::vector<double>>& type_transition, const std::vector<std::vector<double>>& offspring_distribution, std::mt19937_64& mt){
+std::vector<Cell> Cell::daughters(const std::vector<std::vector<double>>& type_transition, const std::vector<std::vector<double>>& offspring_distribution, std::mt19937_64& mt) const {
 
     int no_offsprings = std::discrete_distribution<int>(offspring_distribution[m_type].begin(), offspring_distribution[m_type].end())(mt);
 
