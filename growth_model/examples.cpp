@@ -10,11 +10,11 @@ void test_env(){
     
     std::vector<double> init = {1.0, 1.0};
     std::vector<std::vector<double>> tran = {{1.0, 0}, {0.5, 0.5}};
-    Environments env(2, init, tran);
+    Markov_Environments env(tran, 2, init);
 
     std::ofstream out_env(".//res//environments.dat");
     w.set_env_record(&out_env);
-    w.set_environments(env);
+    w.set_environments(&env);
 
     w.excecute();
 }
@@ -27,11 +27,11 @@ void test_env_cells(){
     //env
     std::vector<double> init = {1.0, 1.0};
     std::vector<std::vector<double>> env_tran = {{0.5, 0.5}, {0.5, 0.5}};
-    Environments env(2, init, env_tran);
+    Markov_Environments env(env_tran, 2, init);
 
     std::ofstream out_env(".//res//environments.dat");
     w.set_env_record(&out_env);
-    w.set_environments(env);
+    w.set_environments(&env);
 
 
     //cells
@@ -62,7 +62,7 @@ void file_read_test(){
 
 
     std::ifstream in_env(".//experiments//sim_1//env.dat");
-    Environments env = read_env(in_env);
+    Markov_Environments env = read_env(in_env);
     std::ifstream in_cells(".//experiments//sim_1//initial_cells.dat");
     std::ifstream in_cell_tran(".//experiments//sim_1//cell_type_tran.dat");
     Cells cells = read_cells(in_cells, in_cell_tran);
@@ -78,7 +78,7 @@ void file_read_test(){
     //record
     std::ofstream out_env(".//experiments//sim_1//res//env.dat");
     w.set_env_record(&out_env);
-    w.set_environments(env);
+    w.set_environments(&env);
     w.set_population(&cells);
     std::ofstream out_pop(".//experiments//sim_1//res//pop.dat");
     std::ofstream out_pop_full(".//experiments//sim_1//res//pop_full.dat");
@@ -160,7 +160,7 @@ void lambda_curve(){
 
 
             std::ifstream in_env(".//experiments//sim_1//env.dat");
-            Environments env = read_env(in_env);
+            Markov_Environments env = read_env(in_env);
             std::ifstream in_cells(".//experiments//sim_1//initial_cells.dat");
             std::ifstream in_cell_tran(".//experiments//sim_1//cell_type_tran.dat");
             Cells cells = read_cells(in_cells, in_cell_tran);
@@ -192,7 +192,7 @@ void lambda_curve(){
             //record
             std::ofstream out_env(".//experiments//sim_1//res//env.dat");
             w.set_env_record(&out_env);
-            w.set_environments(env);
+            w.set_environments(&env);
             w.set_population(&cells);
             std::ofstream out_pop(".//experiments//sim_1//res//pop.dat");
             std::ofstream out_pop_full(".//experiments//sim_1//res//pop_full.dat");

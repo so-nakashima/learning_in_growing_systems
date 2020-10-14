@@ -24,7 +24,7 @@ Cells read_cells(std::ifstream& init_cells, std::ifstream& transition){
     return res;
 }
 
-Environments read_env(std::ifstream& in_env){
+Markov_Environments read_env(std::ifstream& in_env){
     //std::ifstream in_env(path_in_env);
 
     int env_state_no;
@@ -38,7 +38,7 @@ Environments read_env(std::ifstream& in_env){
 
 
 
-    Environments env;
+    Markov_Environments env;
     env.set_cardinality(env_state_no);
     env.set_initial_distribution(initial_env);
     env.set_transition(tran);

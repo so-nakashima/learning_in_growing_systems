@@ -12,8 +12,8 @@ MBPRE::~MBPRE(){
 
 void MBPRE::excecute(){
     //check offspring_distributions is valid
-    assert(offspring_distributions.size() == env.cardinality());
-    for(int y = 0; y != env.cardinality(); y++){
+    assert(offspring_distributions.size() == env->cardinality());
+    for(int y = 0; y != env->cardinality(); y++){
         assert(offspring_distributions[y].size() == pop->cardinality());
         for(int x = 0; x != pop->cardinality(); x++){
             assert(!offspring_distributions[y][x].empty());
@@ -37,18 +37,19 @@ void MBPRE::excecute(){
 }
 
 void MBPRE::record(){
-    env.record(out_env);
+    env->record(out_env);
     pop->record(out_pop);
 }
 
 void MBPRE::time_evolution(){
     //population
-    pop->time_evolution(offspring_distributions[env.current_state()]);
+    pop->time_evolution(offspring_distributions[env->current_state()]);
     pop->record(out_pop_full); //record to-be-discored cells in advance of selection.
     pop->selection();
 
     //environment
-    env.next_state();
+    env->next_state(time);
+    time++;
 }
 
 
@@ -61,23 +62,11 @@ void MBPRE::set_offspring_distributions(const std::vector<std::vector<std::vecto
     offspring_distributions = offspring_dist;
 }
 
-/*
-void MBPRE::set_env_record(std::string path_out){
-    std::ofstream out(path_out);
-    set_env_record(&out);
+
+Markov_Environments::~Markov_Environments(){
 }
 
-void MBPRE::set_pop_record(std::string path_out){
-    std::ofstream out(path_out);
-    set_pop_record(&out);
-}*/
-
-
-
-Environments::~Environments(){
-}
-
-void Environments::set_initial_distribution(const std::vector<double>& init){
+void Markov_Environments::set_initial_distribution(const std::vector<double>& init){
     assert(init.size() == m_cardinality);
     for(int i = 0; i != m_cardinality; i++){
         assert(init[i] >= 0);
@@ -87,26 +76,48 @@ void Environments::set_initial_distribution(const std::vector<double>& init){
     m_current_state = dist(mt);
 }
 
-void Environments::set_cardinality(int n){
+void Markov_Environments::set_cardinality(int n){
     assert(n > 0);
     m_cardinality = n;
 }
 
-void Environments::set_transition(const std::vector<std::vector<double>>& tran_mat){
+void Markov_Environments::set_transition(const std::vector<std::vector<double>>& tran_mat){
     assert(tran_mat.size() == m_cardinality);
+
+    std::vector<std::vector<std::function<double(int)>>> transit_func_mat;
+
     for(int i = 0; i != m_cardinality; i++){
         assert(tran_mat[i].size() == m_cardinality);
+        std::vector<std::function<double(int)>> temp;
         for(int j = 0; j != m_cardinality; j++){
             assert(tran_mat[i][j] >= 0);
+            temp.push_back([=](int _){return tran_mat[i][j];});
         }
+        transit_func_mat.push_back(temp);
     }
-        transition = tran_mat;
+
+    transition = transit_func_mat;
+}
+
+void Markov_Environments::set_transition(const std::vector<std::vector<std::function<double(int)>>>& tran_func_mat){
+    assert(tran_func_mat.size() == m_cardinality);
+    for(int i = 0; i != m_cardinality; i++){
+        assert(tran_func_mat[i].size() == m_cardinality);
+    }
+
+    transition = tran_func_mat;
 }
 
 
 
-int Environments::next_state(){
-    std::discrete_distribution<int> dist(transition[current_state()].begin(), transition[current_state()].end());
+int Markov_Environments::next_state(int t){
+
+    std::vector<double> distribution_vec;
+    for(int i = 0; i != m_cardinality; i++){
+        distribution_vec.push_back(std::max(transition[current_state()][i](t), 0.0));
+    }
+
+    std::discrete_distribution<int> dist(distribution_vec.begin(), distribution_vec.end());
 
     m_current_state = dist(mt);
     return m_current_state;
@@ -114,7 +125,7 @@ int Environments::next_state(){
 
 
 
-Environments::Environments(const int cardinality , const std::vector<double>& initial  , const std::vector<std::vector<double>>& transit_mat ){
+Markov_Environments::Markov_Environments(const std::vector<std::vector<double>>& transit_mat ,const int cardinality , const std::vector<double>& initial){
     //set random generator
     std::random_device rnd;
     mt.seed(rnd());
@@ -128,21 +139,39 @@ Environments::Environments(const int cardinality , const std::vector<double>& in
         m_current_state = 0;
     }
 
-
-
     //set transition matrix if valid; otherwise initialize by uniform transition
-    if(transit_mat.size() != 0)
-        transition = transit_mat;
+    if(transit_mat.size() != 0){
+        set_transition(transit_mat);
+    }
     else
     {
-        transition = std::vector<std::vector<double>>(cardinality, std::vector<double>(cardinality, 1.0));
+        set_transition(std::vector<std::vector<double>>(cardinality, std::vector<double>(cardinality, 1.0)));
     }
     
 }
 
-void Environments::record(std::ofstream* out){
+ Markov_Environments::Markov_Environments(const std::vector<std::vector<std::function<double(int)>>>& transit_func_mat ,const int cardinality , const std::vector<double>& initial){
+    //set random generator
+    std::random_device rnd;
+    mt.seed(rnd());
+
+    set_cardinality(cardinality);
+
+    if(!initial.empty()){
+        set_initial_distribution(initial);
+    }
+    else{
+        m_current_state = 0;
+    }
+
+    //set transition matrix if valid; otherwise initialize by uniform transition
+    set_transition(transit_func_mat);
+} 
+
+void Markov_Environments::record(std::ofstream* out){
     *out << std::to_string(current_state()) << std::endl;
 }
+
 
 Cell::Cell(int type , std::string ID)
 {

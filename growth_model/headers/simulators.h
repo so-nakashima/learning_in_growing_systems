@@ -1,6 +1,8 @@
 #pragma once
 
-#include<vector>
+
+#include <functional>
+#include <vector>
 #include <random>
 #include <iostream>
 #include <fstream>
@@ -8,13 +10,27 @@
 #include <cassert>
 #include <limits>
 
-class Environments
+class Environments_base
+
+{
+private:
+    virtual int next_state(int t){return 0;};
+    virtual void record(std::ofstream* out){};
+public:
+    Environments_base(){};
+    ~Environments_base(){};
+};
+
+
+
+class Markov_Environments : Environments_base
 {
 private:
     //initial data
     int m_cardinality = 1;
-    std::vector<std::vector<double>> transition; //transition[i][j] = prob. of the transition form i to j.
-    //std::vector<int> initial_distribution = std::vector<int>(1, 1);
+    //std::vector<std::vector<std::function<double(int)>>> transition; //transition(t)[i][j] = prob. of the transition form i to j at time t.
+    std::vector<std::vector< std::function<double(int)> >> transition;
+    //std::vector<std::vector<double>> transition;
 
     //states
     int m_current_state = 0;
@@ -23,8 +39,38 @@ private:
     std::mt19937_64 mt;  
 
 public:
-    Environments(const int cardinality = 1, const std::vector<double>& initial  = std::vector<double>(), const std::vector<std::vector<double>>& transit_mat = std::vector<std::vector<double>>());
-    ~Environments();
+    Markov_Environments(const std::vector<std::vector<double>>& transit_mat = std::vector<std::vector<double>>(),
+     const int cardinality = 1, const std::vector<double>& initial  = std::vector<double>()); //for time-homogenous Markov chain (construction from transition matrix)
+    Markov_Environments(const std::vector<std::vector<std::function<double(int)>>>& tran_func_mat, const int cardinality = 1, const std::vector<double>& initial  = std::vector<double>());  //for time-inhomogenous Markov chain
+    ~Markov_Environments();
+
+    const int current_state(){return m_current_state;};
+    const int cardinality(){return m_cardinality;}
+
+    //void set_initial(int init);
+    void set_initial_distribution(const std::vector<double>& init);
+    void set_cardinality(int n);
+    void set_transition(const std::vector<std::vector<double>>& tran_mat);
+    void set_transition(const std::vector<std::vector< std::function<double(int)> >>& tran_func_mat);
+    int next_state(int t);
+    void record(std::ofstream* out);
+};
+
+/* class NonStationary_Markov_Environments
+{
+private:
+    //initial data
+    int m_cardinality = 1;
+    std::vector<std::vector<std::function<double(int)>>> transition; //transition(t)[i][j] = prob. of the transition form i to j at time t.
+
+    //states
+    int m_current_state = 0;
+
+    //random number geeerators
+    std::mt19937_64 mt;  
+public:
+    NonStationary_Markov_Environments(const int cardinality = 1, const std::vector<double>& initial  = std::vector<double>(), const std::vector<std::vector<std::function<double(int)>>>& transit = std::vector<std::vector<std::function<double(int)>>>());
+    ~NonStationary_Markov_Environments(){};
 
     const int current_state(){return m_current_state;};
     const int cardinality(){return m_cardinality;}
@@ -35,7 +81,9 @@ public:
     void set_transition(const std::vector<std::vector<double>>& tran_mat);
     int next_state();
     void record(std::ofstream* out);
-};
+}; */
+
+
 
 class Cell
 {
@@ -112,7 +160,7 @@ public:
     void excecute();
 
     //set intial state
-    void set_environments(const Environments& enviornments){env = enviornments;};
+    void set_environments(Markov_Environments* enviornments){env = enviornments;};
     void set_env_record(std::ofstream* out){out_env = out;};
     //void set_env_record(std::string path_out);
     void set_end_time(int t){assert(t > 0); end_time = t;};
@@ -128,7 +176,7 @@ public:
     //std::vector<std::vector<Cell>> population_history; //hoge[i] is the i-th current population.
 
 private:
-    Environments env;
+    Markov_Environments* env;
     Population* pop;
     void time_evolution();
     int end_time = 10;
@@ -137,6 +185,7 @@ private:
     std::ofstream* out_pop_full; //when max_pop_size is introduced, record the discarded cell in addition to the selected cells.
     void record();
     std::vector<std::vector<std::vector<double>>> offspring_distributions;
+    int time = 0;
 };
 
 

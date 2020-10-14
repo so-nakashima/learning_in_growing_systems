@@ -48,7 +48,7 @@ a_n1 a_n2 ... a_nn
 */
 
 
-Environments read_env(std::ifstream& in_env);
+Markov_Environments read_env(std::ifstream& in_env);
 /*
 format:
 env_state_no(=n)
