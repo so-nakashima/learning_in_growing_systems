@@ -282,7 +282,7 @@ void Cells::record(std::ofstream* out_population){
 
 
 std::vector<Cell_Learn> const Cell_Learn::daughters(const std::vector<std::vector<double>>& offspring_distribution,
-    const std::function<void(int, int, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& learning_rule,
+    const std::function<void(int, int, int,  std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& learning_rule,
     std::mt19937_64& mt){
 
     int no_offsprings = std::discrete_distribution<int>(offspring_distribution[m_type].begin(), offspring_distribution[m_type].end())(mt);
@@ -298,7 +298,7 @@ std::vector<Cell_Learn> const Cell_Learn::daughters(const std::vector<std::vecto
         std::vector<double> temp_rep_hist = replication_history;
         std::vector<double> temp_mem = memory;
 
-        learning_rule(type(), no_offsprings, temp_tran_mat, temp_jump, temp_rep_hist, temp_mem, mt);
+        learning_rule(type(), next_type, no_offsprings, temp_tran_mat, temp_jump, temp_rep_hist, temp_mem, mt);
 
         res.push_back(
             Cell_Learn(next_type, m_ID + std::to_string(i),
@@ -334,11 +334,14 @@ void Cell_Learn::record(std::ofstream* out){
     *out << std::endl;
 }
 
-Cells_Learn::Cells_Learn(int type_no, int max_pop_size, const std::function<void(int, int, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& rule){
+Cells_Learn::Cells_Learn(int type_no, int max_pop_size, 
+const std::vector<Cell_Learn>& initial_pop,
+const std::function<void(int, int, int, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& rule){
 
     set_type_cardinality(type_no);
-    set_max_pop_size(max_pop_size);
+    set_maximum_population_size(max_pop_size);
     set_learning_rule(rule);
+    set_initial_population(initial_pop);
 
     //random generator
     std::random_device rnd;

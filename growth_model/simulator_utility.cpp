@@ -56,3 +56,45 @@ MBPRE read_mbpre(std::ifstream& in){
     w.set_end_time(endtime);
     return w;
 }
+
+std::map<std::string, std::string> read_parameters(std::ifstream& in){
+    std::string temp, temp2;
+    std::map<std::string, std::string> res;
+    while(in >> temp >> temp2){
+        res[temp] = temp2;
+    }
+    return res;
+}
+
+Cells_Learn read_cells_learn(std::ifstream& in){
+    //std::ifstream init_cells(path_init_cells);
+    //std::ifstream transition(path_transition);
+
+    std::vector<Cell_Learn> init_pop;
+    int type_no, cell_no, max_cell_no;
+    in >> type_no >> cell_no >> max_cell_no;
+    assert(type_no > 0 && cell_no >= 0);
+
+    for(int i = 0; i != cell_no; i++){
+        int type; in >> type;
+        std::vector<std::vector<double>> ancestral_jump;
+        std::vector<std::vector<double>> transit;
+        std::vector<double> replication_history;
+        std::vector<double> mem;
+        readMat<double>(type_no, type_no, ancestral_jump, in);
+        readMat<double>(type_no, type_no, transit, in);
+        int vec_size; in >> vec_size;
+        readVec<double>(vec_size, replication_history, in);
+        in >> vec_size;
+        readVec<double>(vec_size, mem, in);
+
+        init_pop.emplace_back(type, std::to_string(i), ancestral_jump, transit, replication_history, mem);
+    }
+
+    Cells_Learn res(type_no, max_cell_no, init_pop); 
+    if(max_cell_no < 0){
+        res.set_maximum_population_size(std::numeric_limits<int>::max());
+    }
+    
+    return res;
+}

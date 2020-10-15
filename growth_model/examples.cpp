@@ -146,7 +146,6 @@ void test_analyze(){
     }
 }
 
-
 void lambda_curve(){
     std::ofstream out_lambda_curve(".//experiments//sim_1//res//analyze//lambda_curve.dat");
 
@@ -212,4 +211,60 @@ void lambda_curve(){
         std::cout << t << "-th calculation end" << std::endl; 
         out_lambda_curve << mean << std::endl;
     }
+}
+
+void test_learning()
+{
+    //initialize world setting
+    std::ifstream in_other(".//experiments//sim_2//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    MBPRE w;
+    w.set_end_time(std::stoi(parameters["end_time"]));
+
+
+    std::ifstream in_env(".//experiments//sim_2//env.dat");
+    Markov_Environments env = read_env(in_env);
+
+    //initalize population
+    std::ifstream in_cells(".//experiments//sim_2//initial_cells.dat");
+    Cells_Learn cells = read_cells_learn(in_cells);
+
+
+    //define learning rule
+    int type_no = cells.cardinality();
+    double learning_rate = std::stod(parameters["learning_rate"]);
+
+    auto learning_rule
+    = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>>& tran, std::vector<std::vector<double>>& jump_hist, std::vector<double>& rep_hist, std::vector<double>& mem, std::mt19937_64& mt){
+
+        //update ancestral jump
+        for(int i = 0; i != type_no; i++){
+            for(int j = 0; j != type_no; j++){
+                jump_hist[i][j] = (1 - learning_rate) * jump_hist[i][j] + learning_rate * ((i == p_type && j == d_type)? 1.0 : 0.0);
+            }
+        }
+
+        //update transition using ancestral jump
+        tran = jump_hist;
+    };
+
+    cells.set_learning_rule(learning_rule);
+
+    //replication
+    std::vector<std::vector<std::vector<double>>> replication;
+    std::ifstream in_repl(".//experiments//sim_2//replication.dat");
+    read3DTensor<double>(replication, in_repl);
+    w.set_offspring_distributions(replication);
+
+    //record
+    std::ofstream out_env(".//experiments//sim_2//res//env.dat");
+    w.set_env_record(&out_env);
+    w.set_environments(&env);
+    w.set_population(&cells);
+    std::ofstream out_pop(".//experiments//sim_2//res//pop.dat");
+    std::ofstream out_pop_full(".//experiments//sim_2//res//pop_full.dat");
+    w.set_pop_record(&out_pop);
+    w.set_pop_full_record(&out_pop_full);
+
+    w.excecute();
 }

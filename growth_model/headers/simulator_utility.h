@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <vector>
+#include <map>
+#include <string>
 #include "simulators.h"
 
 template<typename T>
@@ -140,3 +142,20 @@ void read3DTensor(std::vector<std::vector<std::vector<T>>>& tensor, std::ifstrea
     in >> n >> m >> l;
     read3DTensor(n,m,l, tensor, in);
 }
+
+std::map<std::string, std::string> read_parameters(std::ifstream&);
+//to be converted from string to desired type
+
+Cells_Learn read_cells_learn(std::ifstream& init_cells);
+/*
+format: 
+<type_no> <cell_no> <max_cell_no>
+//max_cell_no < 0 means no limits
+
+//repeat the following format for one cell for <cell_no> times:
+<type>
+<ancestral_jump: entries of type_no * type_no matrix>
+<transit: entries of type_no * type_no matrix> //see also readMat
+<length of replication histroty> <entries of replication history: vector> //see also readVec
+<length of memory> <entries of memory: vector>
+*/

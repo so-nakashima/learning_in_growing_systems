@@ -116,7 +116,7 @@ public:
     const int size(){return current_population.size();}
 };
 
-class Cell_Learn : Cell
+class Cell_Learn : public Cell
 {
 protected:
     std::vector<std::vector<double>> ancestral_jump;
@@ -133,7 +133,7 @@ public:
     ~Cell_Learn(){};
 
     std::vector<Cell_Learn> const daughters(const std::vector<std::vector<double>>& offspring_distribution,
-    const std::function<void(int, int, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& learning_rule,
+    const std::function<void(int, int, int, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& learning_rule,
     std::mt19937_64& mt);
 
     void set_ancestral_jump(const std::vector<std::vector<double>>& jump){ancestral_jump = jump;};
@@ -144,12 +144,13 @@ public:
     void record(std::ofstream* out_population);
 };
 
-class Cells_Learn : Population
+class Cells_Learn : public Population
 {
 private:
     std::function<
-    void(int my_type, 
-    int no_of_daughters, 
+    void(int, 
+    int ,
+    int, 
     std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, 
     std::vector<double>&,
     std::vector<double>&, 
@@ -161,20 +162,23 @@ private:
     std::mt19937_64 mt;
 
 public:
-    Cells_Learn(int type_no, int max_pop_size, const std::function<void(int, int, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& rule 
-    = [](int _, int __, std::vector<std::vector<double>>& _a, std::vector<std::vector<double>>& _b, std::vector<double>& _c,std::vector<double>& _d, std::mt19937_64& _e){});
+    Cells_Learn(int type_no = 0, 
+    int max_pop_size = 1, 
+    const std::vector<Cell_Learn>& initial_pop = {},
+    const std::function<void(int, int, int, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& rule 
+    = [](int _, int __, int _p, std::vector<std::vector<double>>& _a, std::vector<std::vector<double>>& _b, std::vector<double>& _c,std::vector<double>& _d, std::mt19937_64& _e){});
     ~Cells_Learn(){};
 
-    void set_learning_rule(const std::function<void(int, int , std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& rule){learning_rule = rule;};
+    void set_learning_rule(const std::function<void(int, int, int,  std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& rule){learning_rule = rule;};
 
-    //called before replication
-    //update of transition matrix (arg3), memory (arbitrary scalars, arg6)
-    // retrospective mean (arg4), replication_history(type-#daughters pair, arg5) can be used to update, and they are also updated by using my_type(arg1) and no_of_daughters(arg2)
-    //arg 3--arg6 are kept in each cells.
+    //called at the moment of the birth of a daughter cell
+    //update of transition matrix (arg4), memory (arbitrary scalars, arg7)
+    // retrospective mean (arg5), replication_history(type-#daughters pair, arg6) can be used to update, and they are also updated by using my_type(arg1), daughters_type (arg2) and no_of_daughters(arg3)
+    //arg 4--arg7 are kept in each cells.
 
     void set_type_cardinality(const int type_no){m_type_cardinality = type_no;};
-    void set_max_pop_size(const int max_size){maximum_population_size = max_size;};
-    void set_initial_population(const std::vector<Cell>& initial_population);
+    void set_maximum_population_size(const int max_size){maximum_population_size = max_size;};
+    void set_initial_population(const std::vector<Cell_Learn>& initial_population){current_population = initial_population;};
 
     void time_evolution(const std::vector<std::vector<double>>& offspring_distribution);
     void selection();
