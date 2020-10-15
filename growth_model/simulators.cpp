@@ -281,3 +281,94 @@ void Cells::record(std::ofstream* out_population){
 }
 
 
+std::vector<Cell_Learn> const Cell_Learn::daughters(const std::vector<std::vector<double>>& offspring_distribution,
+    const std::function<void(int, int, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& learning_rule,
+    std::mt19937_64& mt){
+
+    int no_offsprings = std::discrete_distribution<int>(offspring_distribution[m_type].begin(), offspring_distribution[m_type].end())(mt);
+
+    std::vector<Cell_Learn> res;
+    for(int i = 0; i != no_offsprings; i++){
+        int next_type = std::discrete_distribution<int>(transition[m_type].begin(), transition[m_type].end())(mt);
+
+
+        //learning
+        std::vector<std::vector<double>> temp_jump = ancestral_jump;
+        std::vector<std::vector<double>> temp_tran_mat = transition;
+        std::vector<double> temp_rep_hist = replication_history;
+        std::vector<double> temp_mem = memory;
+
+        learning_rule(type(), no_offsprings, temp_tran_mat, temp_jump, temp_rep_hist, temp_mem, mt);
+
+        res.push_back(
+            Cell_Learn(next_type, m_ID + std::to_string(i),
+            temp_tran_mat,
+            temp_jump,
+            temp_rep_hist,
+            temp_mem
+        ));
+    }
+
+    return res;
+}
+
+Cell_Learn::Cell_Learn(int type, std::string ID, 
+    const std::vector<std::vector<double>>& jump, 
+    const std::vector<std::vector<double>>& tran_mat,
+    const std::vector<double>& rep_hist,
+    const std::vector<double>& mem){
+    m_type = type;
+    m_ID = ID;
+    set_ancestral_jump(jump);
+    set_transition(tran_mat);
+    set_memory(mem);
+
+}
+
+void Cell_Learn::record(std::ofstream* out){
+    *out << id() << " " << type() << std::endl;
+    out_mat(transition, out);
+    out_mat(ancestral_jump, out);
+    out_vec(replication_history, out);
+    out_vec(memory, out);
+    *out << std::endl;
+}
+
+Cells_Learn::Cells_Learn(int type_no, int max_pop_size, const std::function<void(int, int, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& rule){
+
+    set_type_cardinality(type_no);
+    set_max_pop_size(max_pop_size);
+    set_learning_rule(rule);
+
+    //random generator
+    std::random_device rnd;
+    mt.seed(rnd());
+}
+
+
+void Cells_Learn::selection(){
+    if(current_population.size() > maximum_population_size){
+        std::vector<Cell_Learn> temp;
+
+        std::sample(current_population.begin(), current_population.end(), std::back_inserter(temp), maximum_population_size, mt);
+        current_population = temp;
+    }
+}
+
+void Cells_Learn::time_evolution(const std::vector<std::vector<double>>& offspring_distribution){
+    std::vector<Cell_Learn> new_population;
+    for(auto cell : current_population){
+        std::vector<Cell_Learn> daughters = cell.daughters(offspring_distribution, learning_rule, mt);
+
+        new_population.insert(new_population.end(), daughters.begin(), daughters.end());
+    }
+
+    current_population.clear();
+    current_population = new_population;
+}
+
+void Cells_Learn::record(std::ofstream* out_population){
+    for (auto cell : current_population){
+        cell.record(out_population);
+    }
+}
