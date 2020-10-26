@@ -5,16 +5,15 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/bin",
-                "/usr/include/linux",
                 "/usr/local/include",
                 "/usr/include/python3.8"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/gcc",
-            "cStandard": "gnu18",
+            "compilerPath": "/usr/bin/g++",
+            "cStandard": "gnu17",
             "cppStandard": "c++17",
-            "intelliSenseMode": "gcc-x64"
-
+            "intelliSenseMode": "gcc-x64",
+            "compilerArgs": []
         }
     ],
     "version": 4
