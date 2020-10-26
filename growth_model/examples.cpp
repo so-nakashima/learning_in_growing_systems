@@ -268,3 +268,22 @@ void test_learning()
 
     w.excecute();
 }
+
+void graphic_test(){
+    const int endtime = 5 + 1;
+    const int type_no = 2;
+    const int mem_no = 0;
+
+    std::ifstream in_env(".//experiments//sim_2//res//env.dat");
+    std::vector<int> environments;
+    readVec(endtime, environments, in_env);
+
+    std::ifstream in_pop(".//experiments//sim_2//res//pop.dat");
+    std::ifstream in_pop_full(".//experiments//sim_2//res//pop_full.dat");
+    Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, mem_no, in_pop);
+    Lineage<Cell_Learn> lienage_full = read_learning_lineage(type_no, mem_no, in_pop_full);
+
+    //output lineage graph
+    std::ofstream outgraph(".//experiments//sim_2//res//graph.dot");
+    lineage.graphic([](Cell_Learn _){return 0.0;}, outgraph);
+}

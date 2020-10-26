@@ -27,7 +27,8 @@ public:
     T const parent(const T& cell);
     std::vector<double> const backward_mean(std::vector<std::function<double(T, T, int)>> funcs, int max_no = std::numeric_limits<int>::max()); //calculate backward mean for all f \in funcs. [0...max_no-1]cell is used at the last time// arguments of func are (parent, current , generation) generation is that of cell (0-origin)
     double const backward_mean(std::function<double(T, T, int)> func, int max_no = std::numeric_limits<int>::max());
-    void graphic(){}; //to be implemented via graphviz
+    void const graphic(std::function<double(T)> func, std::ofstream& out);
+    //coloar plot for  func(cell) over lineage (graphviz)
 
     //for growth rate
     double const lambda(int max_pop_no);
@@ -35,7 +36,7 @@ public:
 
 Lineage<Cell> read_lineage(std::ifstream& in);
 
-//implementation
+Lineage<Cell_Learn> read_learning_lineage(int type_no, int memory_no, std::ifstream& in);
 
 
 template<typename T> Lineage<T>::Lineage(const std::vector<std::vector<T>> population, std::map<std::string, T> pop_map){
@@ -93,3 +94,53 @@ template<typename T> double const Lineage<T>::lambda(int max_pop_no){
 }
 
 
+template<typename T> void const Lineage<T>::graphic(std::function<double(T)> func, std::ofstream& out){
+    out << "digraph lineage { \n";
+
+    //graph
+    std::string graph_property = R"(graph [
+layout = dot
+    ]
+    )";
+    out << graph_property;
+
+    //node
+    std::string node_property = R"(node [
+shape = circle,
+label = "";
+    ]
+    )";
+    out << node_property;
+
+    //edge
+    std::string edge_property = R"(edge [
+dir = none
+    ]
+    )";
+    out << edge_property;
+
+
+
+    //generate node and edages from lienage data
+    //nodes
+    for(auto pop_t : m_population){
+        for(auto c : pop_t){
+            out << c.id() << std::endl;
+        }
+    }
+    //edges
+    for(auto pop_t : m_population){
+        for(auto c : pop_t){
+            if(c.id().size() > 1){
+                T parent_cell = parent(c);
+                out << parent_cell.id() << " -> " << c.id() << std::endl;
+            }
+        }
+    }
+
+    //rank
+
+
+
+    out << "}";
+}

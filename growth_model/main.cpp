@@ -12,4 +12,6 @@ int main()
 
    test_learning();
    //lambda_curve();
+
+   graphic_test();
 }  

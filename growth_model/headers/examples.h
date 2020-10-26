@@ -6,3 +6,4 @@ void file_read_test();
 void test_analyze();
 void lambda_curve();
 void test_learning();
+void graphic_test();

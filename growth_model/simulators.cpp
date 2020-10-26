@@ -327,9 +327,9 @@ Cell_Learn::Cell_Learn(int type, std::string ID,
 
 void Cell_Learn::record(std::ofstream* out){
     *out << id() << " " << type() << std::endl;
-    out_mat(transition, out);
     out_mat(ancestral_jump, out);
-    out_vec(replication_history, out);
+    out_mat(transition, out);
+    //out_vec(replication_history, out);
     out_vec(memory, out);
     *out << std::endl;
 }
