@@ -1,5 +1,6 @@
 #pragma onece
 
+#include <iomanip>
 #include <vector>
 #include <map>
 #include <string>
@@ -7,6 +8,9 @@
 #include <limits>
 #include <cmath>
 #include "simulators.h"
+#include <colormap-shaders/include/colormap/colormap.h>
+#include <boost/format.hpp>
+
 
 template<typename T> class Lineage
 {
@@ -27,7 +31,9 @@ public:
     T const parent(const T& cell);
     std::vector<double> const backward_mean(std::vector<std::function<double(T, T, int)>> funcs, int max_no = std::numeric_limits<int>::max()); //calculate backward mean for all f \in funcs. [0...max_no-1]cell is used at the last time// arguments of func are (parent, current , generation) generation is that of cell (0-origin)
     double const backward_mean(std::function<double(T, T, int)> func, int max_no = std::numeric_limits<int>::max());
-    void const graphic(std::function<double(T)> func, std::ofstream& out);
+    void const graphic(std::function<double(T)> func, std::ofstream& out, std::ofstream& out_other_data);
+    double const max(std::function<double(T)> func);
+    double const min(std::function<double(T)> func);
     //coloar plot for  func(cell) over lineage (graphviz)
 
     //for growth rate
@@ -94,40 +100,63 @@ template<typename T> double const Lineage<T>::lambda(int max_pop_no){
 }
 
 
-template<typename T> void const Lineage<T>::graphic(std::function<double(T)> func, std::ofstream& out){
+template<typename T> void const Lineage<T>::graphic(std::function<double(T)> func, std::ofstream& out, std::ofstream& out_other_data){
     out << "digraph lineage { \n";
 
     //graph
     std::string graph_property = R"(graph [
 layout = dot
-    ]
-    )";
+]
+)";
     out << graph_property;
 
     //node
     std::string node_property = R"(node [
 shape = circle,
-label = "";
-    ]
-    )";
+label = "",
+style = filled,
+color = white
+]
+)";
     out << node_property;
 
     //edge
     std::string edge_property = R"(edge [
 dir = none
-    ]
-    )";
+]
+)";
     out << edge_property;
 
 
 
     //generate node and edages from lienage data
     //nodes
+    using namespace colormap;
+    MATLAB::Jet jet;
+    double max_val = max(func);
+    double min_val = min(func);
+
+    out_other_data << min_val << " " << max_val << std::endl;
+
     for(auto pop_t : m_population){
         for(auto c : pop_t){
-            out << c.id() << std::endl;
+            //id
+            out << c.id() << " ";
+            //color
+            float normalized_func_val = (func(c) - min_val) / (max_val - min_val);
+            Color col = jet.getColor(normalized_func_val);
+
+            int r = std::max(0, std::min(255, (int) (col.r * 256)));
+            int g = std::max(0, std::min(255, (int) (col.g * 256)));
+            int b = std::max(0, std::min(255, (int) (col.b * 256)));
+            std::string color_s = (boost::format("%02x%02x%02x") % r % g % b).str();
+
+            out << "[ fillcolor = \"#" << color_s
+                << "\" ]"
+                << std::endl;
         }
     }
+
     //edges
     for(auto pop_t : m_population){
         for(auto c : pop_t){
@@ -143,4 +172,22 @@ dir = none
 
 
     out << "}";
+}
+
+template<typename T> double const Lineage<T>::max(std::function<double(T)> func){
+    double res = std::numeric_limits<double>::min();
+    for(auto pop_t : m_population){
+        for(auto t : pop_t)
+            res = std::max(res, func(t));
+    }
+    return res;
+}
+
+template<typename T> double const Lineage<T>::min(std::function<double(T)> func){
+    double res = std::numeric_limits<double>::max();
+    for(auto pop_t : m_population){
+        for(auto t : pop_t)
+            res = std::min(res, func(t));
+    }
+    return res;
 }

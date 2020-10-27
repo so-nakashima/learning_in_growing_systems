@@ -285,5 +285,9 @@ void graphic_test(){
 
     //output lineage graph
     std::ofstream outgraph(".//experiments//sim_2//res//graph.dot");
-    lineage.graphic([](Cell_Learn _){return 0.0;}, outgraph);
+    std::ofstream out_graph_max_min(".//experiments//sim_2//res//graph_max_min.dat");
+    auto output_func = [](Cell_Learn c){
+        return c.transition[0][0] / (c.transition[0][0] + c.transition[0][1]);
+    };
+    lineage.graphic(output_func, outgraph, out_graph_max_min);
 }

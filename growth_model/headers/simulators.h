@@ -119,10 +119,7 @@ public:
 class Cell_Learn : public Cell
 {
 protected:
-    std::vector<std::vector<double>> ancestral_jump;
-    std::vector<std::vector<double>> transition;
-    std::vector<double> replication_history;
-    std::vector<double> memory;
+
 
 public:
     Cell_Learn(int type = 0, std::string ID = "", 
@@ -131,6 +128,12 @@ public:
     const std::vector<double>& rep_hist = std::vector<double>(),
     const std::vector<double>& mem = std::vector<double>());
     ~Cell_Learn(){};
+
+
+    std::vector<std::vector<double>> transition;
+    std::vector<std::vector<double>> ancestral_jump;
+    std::vector<double> replication_history;
+    std::vector<double> memory;
 
     std::vector<Cell_Learn> const daughters(const std::vector<std::vector<double>>& offspring_distribution,
     const std::function<void(int, int, int, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&,std::vector<double>&, std::mt19937_64&)>& learning_rule,
