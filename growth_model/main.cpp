@@ -10,8 +10,9 @@ int main()
    //file_read_test();
    //test_analyze();
 
-   //test_learning();
+   test_learning();
    //lambda_curve();
 
-   graphic_test();
+   //graphic_test();
+   //lambda_sample();
 }  

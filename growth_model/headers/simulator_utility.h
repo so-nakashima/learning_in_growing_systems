@@ -18,7 +18,7 @@ a_21 a_22 ... a_2m
 a_n1 a_n2 ... a_nm
 */
 template<typename T>
-void readMat(int n, int m, std::vector<std::vector<T>>& mat, std::ifstream& in);
+void readMat(const int n, const int m, std::vector<std::vector<T>>& mat, std::ifstream& in);
 
 template<typename T>
 void readVec(std::vector<T>& vec, std::ifstream& in);
@@ -29,7 +29,7 @@ a_1 a_2 ... a_n
 */
 
 template<typename T>
-void read3DTensor(int n, int m,  int l, std::vector< std::vector< std::vector<T> > >& tensor, std::ifstream& in);
+void read3DTensor(const int n, const int m, const int l, std::vector< std::vector< std::vector<T> > >& tensor, std::ifstream& in);
 
 template<typename T>
 void read3DTensor(std::vector< std::vector< std::vector<T> > >& tensor, std::ifstream& in);
@@ -83,7 +83,7 @@ void readMat(std::vector<std::vector<T>>& mat, std::ifstream& in){
 }
 
 template<typename T>
-void readMat(int n, int m, std::vector<std::vector<T>>& mat, std::ifstream& in){ 
+void readMat(const int n, const int m, std::vector<std::vector<T>>& mat, std::ifstream& in){ 
     mat.clear();
     for(int i = 0; i != n; i++){
         std::vector<T> temp;
@@ -101,7 +101,7 @@ void readMat(int n, int m, std::vector<std::vector<T>>& mat, std::ifstream& in){
 
 
 template<typename T>
-void readVec(int n, std::vector<T>& vec, std::ifstream& in){ 
+void readVec(const int n, std::vector<T>& vec, std::ifstream& in){ 
     vec.clear();
     for(int i = 0; i != n; i++){
        T temp;
@@ -119,7 +119,7 @@ void readVec(std::vector<T>& vec, std::ifstream& in){
 }
 
 template<typename T>
-void read3DTensor(int n, int m,  int l, std::vector<std::vector<std::vector<T>>>& tensor, std::ifstream& in){ 
+void read3DTensor(const int n, const int m,  const int l, std::vector<std::vector<std::vector<T>>>& tensor, std::ifstream& in){ 
     tensor.clear();
     for(int i = 0; i != n; i++){
         std::vector<std::vector<T>> mat;

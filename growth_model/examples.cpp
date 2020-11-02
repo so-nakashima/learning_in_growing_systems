@@ -2,6 +2,7 @@
 #include <vector>
 #include "headers/simulator_utility.h"
 #include "headers/analyze.h"
+#include "headers/linterp.h"
 
 void test_env(){
     MBPRE w;
@@ -150,7 +151,7 @@ void lambda_curve(){
     std::ofstream out_lambda_curve(".//experiments//sim_1//res//analyze//lambda_curve.dat");
 
     int mean_no = 200;
-    for(int t = - 30; t != 31; t++){
+    for(int t = 0; t != 100; t++){
         double mean = 0.0;
         for(int i = 0; i != mean_no; i++){
             //initialize world setting
@@ -164,12 +165,12 @@ void lambda_curve(){
             std::ifstream in_cell_tran(".//experiments//sim_1//cell_type_tran.dat");
             Cells cells = read_cells(in_cells, in_cell_tran);
             cells.set_maximum_population_size(100);
-/*             std::vector<std::vector<double>> cell_tran = {{0.5,0.5}, {0.5,0.5}};
-            cell_tran[0][0] = 0.7 + t * 0.01;
-            cell_tran[0][1] = 0.3 - t * 0.01;
-            cell_tran[1][0] = 0.3 - t * 0.01;
-            cell_tran[1][1] = 0.7 + t * 0.01;
-            cells.set_type_transition(cell_tran); */
+             std::vector<std::vector<double>> cell_tran = {{0.5,0.5}, {0.5,0.5}};
+            cell_tran[0][0] =  t * 0.01;
+            cell_tran[0][1] = 1.0 - t * 0.01;
+            cell_tran[1][0] = 1.0 - t * 0.01;
+            cell_tran[1][1] =  t * 0.01;
+            cells.set_type_transition(cell_tran); 
 
 
             //replication
@@ -177,9 +178,9 @@ void lambda_curve(){
             std::ifstream in_repl(".//experiments//sim_1//replication.dat");
             read3DTensor<double>(replication, in_repl);
 
-            replication[0][0][4] = 0.0;
-            replication[0][0][3] = .5 - t / 60.0;
-            replication[0][0][9] = .5 + t / 60.0;
+            //replication[0][0][4] = 0.0;
+            //replication[0][0][3] = .5 - t / 60.0;
+            //replication[0][0][9] = .5 + t / 60.0;
             //replication[1][1][4] = 0.0;
             //replication[1][1][1] = .5 - t / 60.0;
             //replication[1][1][7] = .5 + t / 60.0;
@@ -234,7 +235,7 @@ void test_learning()
     int type_no = cells.cardinality();
     double learning_rate = std::stod(parameters["learning_rate"]);
 
-    auto learning_rule
+    /* auto learning_rule
     = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>>& tran, std::vector<std::vector<double>>& jump_hist, std::vector<double>& rep_hist, std::vector<double>& mem, std::mt19937_64& mt){
 
         //update ancestral jump
@@ -246,6 +247,31 @@ void test_learning()
 
         //update transition using ancestral jump
         tran = jump_hist;
+    }; */
+    auto learning_rule
+    = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>>& tran, std::vector<std::vector<double>>& jump_hist, std::vector<double>& rep_hist, std::vector<double>& mem, std::mt19937_64& mt){
+        
+        //update ancestral jump
+        for(int i = 0; i != type_no; i++){
+            for(int j = 0; j != type_no; j++){
+                jump_hist[i][j] = (1 - learning_rate) * jump_hist[i][j] + learning_rate * ((i == p_type && j == d_type)? 1.0 : 0.0);
+            }
+        }
+
+        
+
+        std::vector<double> pi(3, 0.0); //ancestral type_distribution at one-point
+        for(int i = 0; i != type_no; i++){
+            for(int j = 0; j != type_no; j++){
+                pi[i] += jump_hist[i][j];
+            }
+        }
+
+        for(int i = 0; i != type_no; i++){
+            for(int j = 0; j != type_no; j++){
+                tran[i][j] = pi[j];
+            }
+        }
     };
 
     cells.set_learning_rule(learning_rule);
@@ -269,6 +295,13 @@ void test_learning()
     w.excecute();
 }
 
+std::vector<double> linspace(double first, double last, int len) {
+  std::vector<double> result(len);
+  double step = (last-first) / (len - 1);
+  for (int i=0; i<len; i++) { result[i] = first + i*step; }
+  return result;
+}
+
 void graphic_test(){
     const int endtime = 5 + 1;
     const int type_no = 2;
@@ -281,13 +314,119 @@ void graphic_test(){
     std::ifstream in_pop(".//experiments//sim_2//res//pop.dat");
     std::ifstream in_pop_full(".//experiments//sim_2//res//pop_full.dat");
     Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, mem_no, in_pop);
-    Lineage<Cell_Learn> lienage_full = read_learning_lineage(type_no, mem_no, in_pop_full);
+    Lineage<Cell_Learn> lineage_full = read_learning_lineage(type_no, mem_no, in_pop_full);
+
+
+    //lambda
+    const int mesh_size = 50;
+    const int length = mesh_size + 1;
+    std::vector<double> grid1 = linspace(0.0, 1.0, length);
+    std::vector<double> grid2 = linspace(0.0, 1.0, length);
+
+    std::ifstream in_lambda_sample(R"(./experiments/sim_2/res/analyze/lambda_sample_point8_symmetric.dat)");
+    std::vector<double> f_values;
+    readVec(length * length,f_values, in_lambda_sample);
+
+    std::vector< std::vector<double>::iterator > grid_iter_list;
+    grid_iter_list.push_back(grid1.begin());
+    grid_iter_list.push_back(grid2.begin());
+
+    boost::array<int,2> grid_sizes;
+    grid_sizes[0] = length;
+    grid_sizes[1] = length;
+
+    int num_elements = length * length;
+
+    InterpMultilinear<2, double> interp_ML(grid_iter_list.begin(), grid_sizes.begin(), f_values.data(), f_values.data() + num_elements);
+
+    auto out_lambda = [& interp_ML](Cell_Learn c){
+        double t00 = c.transition[0][0] / (c.transition[0][0] + c.transition[0][1]);
+        double t11 = c.transition[1][1] / (c.transition[1][0] + c.transition[1][1]);
+
+        boost::array<double, 2> args = {t00, t11};
+
+        return interp_ML.interp(args.begin());
+    };
+
 
     //output lineage graph
     std::ofstream outgraph(".//experiments//sim_2//res//graph.dot");
+    std::ofstream outgraph_full(".//experiments//sim_2//res//graph_full.dot");
     std::ofstream out_graph_max_min(".//experiments//sim_2//res//graph_max_min.dat");
+    std::ofstream out_graph_max_min_full(".//experiments//sim_2//res//graph_max_min_full.dat");
     auto output_func = [](Cell_Learn c){
         return c.transition[0][0] / (c.transition[0][0] + c.transition[0][1]);
     };
-    lineage.graphic(output_func, outgraph, out_graph_max_min);
+    lineage.graphic(out_lambda, outgraph, out_graph_max_min);
+    lineage_full.graphic(output_func, outgraph_full, out_graph_max_min_full);
+}
+
+void lambda_sample(){
+    std::ofstream out_lambda_sample(".//experiments//sim_2//res//analyze//lambda_sample_point8_symmetric.dat");
+
+    int mean_no = 50;
+    int mesh_size = 50;
+    for(int t1 = 0; t1 != mesh_size + 1; t1++){
+        for(int t2 = 0; t2!= mesh_size; t2++){
+            double mean = 0.0;
+            for(int i = 0; i != mean_no + 1; i++){
+                //initialize world setting
+                std::ifstream in_other(".//experiments//sim_2//world_other.dat");
+                MBPRE w = read_mbpre(in_other);
+
+
+                std::ifstream in_env(".//experiments//sim_2//env.dat");
+                Markov_Environments env = read_env(in_env);
+                std::ifstream in_cells(".//experiments//sim_2//for_lambda//initial_cells.dat");
+                std::ifstream in_cell_tran(".//experiments//sim_2//for_lambda//cell_type_tran.dat");
+                Cells cells = read_cells(in_cells, in_cell_tran);
+                std::vector<std::vector<double>> cell_tran = {{0.5,0.5}, {0.5,0.5}};
+                cell_tran[0][0] = ((double) t1) / mesh_size;
+                cell_tran[0][1] = 1 - ((double) t1) / mesh_size;
+                cell_tran[1][0] = 1 - ((double) t2) / mesh_size;
+                cell_tran[1][1] = ((double) t2) / mesh_size;
+                cells.set_type_transition(cell_tran); 
+
+
+                //replication
+                std::vector<std::vector<std::vector<double>>> replication;
+                std::ifstream in_repl(".//experiments//sim_1//replication.dat");
+                read3DTensor<double>(replication, in_repl);
+
+                //replication[0][0][4] = 0.0;
+                //replication[0][0][3] = .5 - t / 60.0;
+                //replication[0][0][9] = .5 + t / 60.0;
+                //replication[1][1][4] = 0.0;
+                //replication[1][1][1] = .5 - t / 60.0;
+                //replication[1][1][7] = .5 + t / 60.0;
+
+                w.set_offspring_distributions(replication);
+                w.set_end_time(100);
+
+
+                //record
+                std::ofstream out_env(".//experiments//sim_2//res//env.dat");
+                w.set_env_record(&out_env);
+                w.set_environments(&env);
+                w.set_population(&cells);
+                std::ofstream out_pop(".//experiments//sim_2//res//pop.dat");
+                std::ofstream out_pop_full(".//experiments//sim_2//res//pop_full.dat");
+                w.set_pop_record(&out_pop);
+                w.set_pop_full_record(&out_pop_full);
+
+                w.excecute();
+
+
+                std::ifstream in_pop_full(".//experiments//sim_2//res//pop_full.dat");
+
+                Lineage<Cell> lienage_full = read_lineage(in_pop_full);
+
+                mean += lienage_full.lambda(100) / mean_no;
+
+            }
+            std::cout << (mesh_size + 1) * t1 + t2 << "-th calculation end" << std::endl; 
+            out_lambda_sample << mean << " ";
+        }
+        out_lambda_sample << std::endl;
+    }
 }

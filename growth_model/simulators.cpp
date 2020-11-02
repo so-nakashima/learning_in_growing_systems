@@ -28,7 +28,8 @@ void MBPRE::excecute(){
     for(int t = 0; t != end_time; t++){
         //record (this is first in order to record t = 0)
         record();
-        pop->record(out_pop_full);
+        if(t == 0)
+            pop->record(out_pop_full);
 
         time_evolution();
 
@@ -302,8 +303,8 @@ std::vector<Cell_Learn> const Cell_Learn::daughters(const std::vector<std::vecto
 
         res.push_back(
             Cell_Learn(next_type, m_ID + std::to_string(i),
-            temp_tran_mat,
             temp_jump,
+            temp_tran_mat,
             temp_rep_hist,
             temp_mem
         ));
