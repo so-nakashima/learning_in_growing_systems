@@ -8,3 +8,4 @@ void lambda_curve();
 void test_learning();
 void graphic_test();
 void lambda_sample();
+void lambda_sample_highdim();

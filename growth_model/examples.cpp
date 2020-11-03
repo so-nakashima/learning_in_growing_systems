@@ -3,6 +3,9 @@
 #include "headers/simulator_utility.h"
 #include "headers/analyze.h"
 #include "headers/linterp.h"
+#include <iterator>
+#include <algorithm>
+
 
 void test_env(){
     MBPRE w;
@@ -34,7 +37,6 @@ void test_env_cells(){
     w.set_env_record(&out_env);
     w.set_environments(&env);
 
-
     //cells
     std::vector<std::vector<double>> type_tran = {{0.8, 0.2}, {0.2,0.8}};
     std::vector<Cell> init_pop = {Cell(0, "0")};//, Cell(0, "1")};
@@ -57,32 +59,35 @@ void test_env_cells(){
 }
 
 void file_read_test(){
+
     //initialize world setting
-    std::ifstream in_other(".//experiments//sim_1//world_other.dat");
-    MBPRE w = read_mbpre(in_other);
+    std::ifstream in_other(".//experiments//sim_2//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    MBPRE w;
+    w.set_end_time(std::stoi(parameters["end_time"]));
 
 
-    std::ifstream in_env(".//experiments//sim_1//env.dat");
+    std::ifstream in_env(".//experiments//sim_2//env.dat");
     Markov_Environments env = read_env(in_env);
-    std::ifstream in_cells(".//experiments//sim_1//initial_cells.dat");
-    std::ifstream in_cell_tran(".//experiments//sim_1//cell_type_tran.dat");
+    std::ifstream in_cells(".//experiments//sim_2//for_lambda//initial_cells.dat");
+    std::ifstream in_cell_tran(".//experiments//sim_2//for_lambda//cell_type_tran.dat");
     Cells cells = read_cells(in_cells, in_cell_tran);
     cells.set_maximum_population_size(10);
 
 
     //replication
     std::vector<std::vector<std::vector<double>>> replication;
-    std::ifstream in_repl(".//experiments//sim_1//replication.dat");
+    std::ifstream in_repl(".//experiments//sim_2//replication.dat");
     read3DTensor<double>(replication, in_repl);
     w.set_offspring_distributions(replication);
 
     //record
-    std::ofstream out_env(".//experiments//sim_1//res//env.dat");
+    std::ofstream out_env(".//experiments//sim_2//res//env.dat");
     w.set_env_record(&out_env);
     w.set_environments(&env);
     w.set_population(&cells);
-    std::ofstream out_pop(".//experiments//sim_1//res//pop.dat");
-    std::ofstream out_pop_full(".//experiments//sim_1//res//pop_full.dat");
+    std::ofstream out_pop(".//experiments//sim_2//res//pop.dat");
+    std::ofstream out_pop_full(".//experiments//sim_2//res//pop_full.dat");
     w.set_pop_record(&out_pop);
     w.set_pop_full_record(&out_pop_full);
 
@@ -90,16 +95,20 @@ void file_read_test(){
 }
 
 void test_analyze(){
-    std::ifstream in_env(".//experiments//sim_1//res//env.dat");
-    std::vector<int> environments;
-    readVec(5000, environments, in_env);
+    std::ifstream in_other(".//experiments//sim_2//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    const int endtime = std::stoi(parameters["end_time"]);
 
-    std::ifstream in_pop(".//experiments//sim_1//res//pop.dat");
-    std::ifstream in_pop_full(".//experiments//sim_1//res//pop_full.dat");
+    std::ifstream in_env(".//experiments//sim_2//res//env.dat");
+    std::vector<int> environments;
+    readVec(endtime, environments, in_env);
+
+    std::ifstream in_pop(".//experiments//sim_2//res//pop.dat");
+    std::ifstream in_pop_full(".//experiments//sim_2//res//pop_full.dat");
     Lineage<Cell> lineage = read_lineage(in_pop);
     Lineage<Cell> lienage_full = read_lineage(in_pop_full);
 
-    std::ofstream out_lambda(".//experiments//sim_1//res//analyze//lambda.dat");
+    std::ofstream out_lambda(".//experiments//sim_2//res//analyze//lambda.dat");
     out_lambda << lienage_full.lambda(10) << std::endl;
 
     std::ofstream out_retro(".//experiments//sim_1//res//analyze//retro.dat");
@@ -361,6 +370,47 @@ void graphic_test(){
     lineage_full.graphic(output_func, outgraph_full, out_graph_max_min_full);
 }
 
+
+void output_lambda_helper_next(std::vector<int>& itrs, const std::vector<std::vector<double>>& coordinates, std::ofstream& out){
+
+    for(int i = 0; i != itrs.size(); i++){
+        if(itrs[i] < coordinates[i].size() - 1){
+            itrs[i]++;
+            break;
+        }
+        else{
+        itrs[i] = 0;
+        out << std::endl;
+        }
+    }
+}
+
+void output_lambdas_helper(const std::vector<std::vector<double>>& coordinates, std::ofstream& out,
+std::function<double(const std::vector<double>&)> func
+){
+    const int dim = coordinates.size();
+    std::vector<int> itrs(dim, 0);
+
+    int grid_no = 1;
+    for(int i = 0; i != dim; i++){
+        grid_no *= coordinates[i].size();
+    }
+
+    for(int i = 0; i != grid_no; i++){
+        std::vector<double> args;
+        for(int j = 0; j != dim; j++){
+            args.push_back(coordinates[j][itrs[j]]);
+        }
+        out << func(args) << " ";
+        output_lambda_helper_next(itrs, coordinates, out);
+
+        std::cout << std::to_string(i) + "-th calculation ends" << std::endl;
+    }
+}
+
+
+
+
 void lambda_sample(){
     std::ofstream out_lambda_sample(".//experiments//sim_2//res//analyze//lambda_sample_point8_symmetric.dat");
 
@@ -390,7 +440,7 @@ void lambda_sample(){
 
                 //replication
                 std::vector<std::vector<std::vector<double>>> replication;
-                std::ifstream in_repl(".//experiments//sim_1//replication.dat");
+                std::ifstream in_repl(".//experiments//sim_2//replication.dat");
                 read3DTensor<double>(replication, in_repl);
 
                 //replication[0][0][4] = 0.0;
@@ -429,4 +479,81 @@ void lambda_sample(){
         }
         out_lambda_sample << std::endl;
     }
+}
+
+void lambda_sample_highdim(){
+    const int mesh_size = 6;
+    const int dim = 6;
+    const int mean_no = 10;
+    std::ofstream out_lambda_sample(".//experiments//sim_2//res//analyze//lambda_sample_cyclic.dat");
+
+    std::vector<std::vector<double>> coordinates;
+    for(int i = 0; i != dim; i++){
+        std::vector<double> temp;
+        for(int j = 0; j != mesh_size; j++)
+            temp.push_back(1.0 / (mesh_size - 1) * j);
+        
+        coordinates.push_back(temp);
+    }
+    
+    auto func = [](const std::vector<double>& args){
+        double mean = 0.0;
+
+        for(int i = 0; i != mean_no; i++){
+            std::ifstream in_other(".//experiments//sim_2//world_other.dat");
+            MBPRE w = read_mbpre(in_other);
+
+
+            std::ifstream in_env(".//experiments//sim_2//env.dat");
+            Markov_Environments env = read_env(in_env);
+            std::ifstream in_cells(".//experiments//sim_2//for_lambda//initial_cells.dat");
+            std::ifstream in_cell_tran(".//experiments//sim_2//for_lambda//cell_type_tran.dat");
+            Cells cells = read_cells(in_cells, in_cell_tran);
+            std::vector<std::vector<double>> cell_tran = {{0.5,0.5, 0.5}, {0.5,0.5,0.5}, {0.5,0.5,0.5}};
+
+            cell_tran[0][0] = args[0];
+            cell_tran[0][1] = args[1];
+            cell_tran[0][2] = 1 - args[0] - args[1];
+            cell_tran[1][0] = args[2];
+            cell_tran[1][1] = args[3];
+            cell_tran[1][2] = 1 - args[2] - args[3];
+            cell_tran[2][0] = args[4];
+            cell_tran[2][1] = args[5];
+            cell_tran[2][2] = 1 - args[4] - args[5];
+            cells.set_type_transition(cell_tran); 
+
+
+            //replication
+            std::vector<std::vector<std::vector<double>>> replication;
+            std::ifstream in_repl(".//experiments//sim_2//replication.dat");
+            read3DTensor<double>(replication, in_repl);
+
+            w.set_offspring_distributions(replication);
+            w.set_end_time(100);
+
+
+            //record
+            std::ofstream out_env(".//experiments//sim_2//res//env.dat");
+            w.set_env_record(&out_env);
+            w.set_environments(&env);
+            w.set_population(&cells);
+            std::ofstream out_pop(".//experiments//sim_2//res//pop.dat");
+            std::ofstream out_pop_full(".//experiments//sim_2//res//pop_full.dat");
+            w.set_pop_record(&out_pop);
+            w.set_pop_full_record(&out_pop_full);
+
+            w.excecute();
+
+
+            std::ifstream in_pop_full(".//experiments//sim_2//res//pop_full.dat");
+
+            Lineage<Cell> lienage_full = read_lineage(in_pop_full);
+
+            mean += lienage_full.lambda(100) / mean_no;
+        }
+
+        return mean;
+    };
+
+    output_lambdas_helper(coordinates, out_lambda_sample, func);
 }

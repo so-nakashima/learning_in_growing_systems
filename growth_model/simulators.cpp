@@ -186,12 +186,18 @@ Cell::~Cell()
 }
 
 std::vector<Cell> Cell::daughters(const std::vector<std::vector<double>>& type_transition, const std::vector<std::vector<double>>& offspring_distribution, std::mt19937_64& mt) const {
+    return daughters(m_type, type_transition, offspring_distribution, mt);
+}
 
-    int no_offsprings = std::discrete_distribution<int>(offspring_distribution[m_type].begin(), offspring_distribution[m_type].end())(mt);
+std::vector<Cell> Cell::daughters(const int common_parent_type, const std::vector<std::vector<double>>& type_transition, const std::vector<std::vector<double>>& offspring_distribution, std::mt19937_64& mt) const {
+
+    const int p_type = common_parent_type;  //for simplification
+    
+    int no_offsprings = std::discrete_distribution<int>(offspring_distribution[p_type].begin(), offspring_distribution[p_type].end())(mt);
 
     std::vector<Cell> res;
     for(int i = 0; i != no_offsprings; i++){
-        int next_type = std::discrete_distribution<int>(type_transition[m_type].begin(), type_transition[m_type].end())(mt);
+        int next_type = std::discrete_distribution<int>(type_transition[p_type].begin(), type_transition[p_type].end())(mt);
         res.push_back(Cell(next_type, m_ID + std::to_string(i)));
     }
 
@@ -279,6 +285,48 @@ void Cells::record(std::ofstream* out_population){
     for (auto cell : current_population){
         cell.record(out_population);
     }
+}
+
+Cells_Common::Cells_Common(int type_no , int init_common_p_type, 
+    const std::vector<std::vector<double>>& type_tran,
+    const std::vector<Cell>& initial_population,
+    int max_pop_size)
+{
+    set_common_p_type(init_common_p_type);
+    set_maximum_population_size(max_pop_size);
+    set_type_cardinality(type_no);
+    set_initial_population(initial_population);
+
+    if(type_tran.empty()){//default argument (uniform transition)
+        set_type_transition(std::vector<std::vector<double>>(type_cardinality, std::vector<double>(type_cardinality, 1.0)));
+    }
+    else
+    {
+        set_type_transition(type_tran);
+    }
+
+    //random generator
+    std::random_device rnd;
+    mt.seed(rnd());
+}
+
+void Cells_Common::time_evolution(const std::vector<std::vector<double>>& offspring_distribution){
+
+    //new population
+    std::vector<Cell> new_population;
+    for(auto cell : current_population){
+
+        std::vector<Cell> daughters = cell.daughters(m_common_p_type, type_transition, offspring_distribution, mt);
+
+        new_population.insert(new_population.end(), daughters.begin(), daughters.end());
+    }
+
+    current_population.clear();
+    current_population = new_population;
+
+    //new shared parent type
+    m_common_p_type = std::discrete_distribution<int>(type_transition[m_common_p_type].begin(), type_transition[m_common_p_type].end())(mt);
+
 }
 
 

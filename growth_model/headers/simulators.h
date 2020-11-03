@@ -68,6 +68,9 @@ public:
     std::vector<Cell> daughters(const std::vector<std::vector<double>>& type_transition, const std::vector<std::vector<double>>& offspring_distribution,
     std::mt19937_64& mt) const ;
 
+    std::vector<Cell> daughters(const int common_parent_type, const std::vector<std::vector<double>>& type_transition, const std::vector<std::vector<double>>& offspring_distribution,
+    std::mt19937_64& mt) const ;
+
     int type() const {return m_type;}
     std::string id() const {return m_ID;}
 
@@ -89,7 +92,7 @@ public:
 
 class Cells : public Population
 {
-private:
+protected:
     int type_cardinality;
     std::vector<std::vector<double>> type_transition; //type_transiton[i][j] = prob. of type transition from i to j
     int maximum_population_size; 
@@ -115,6 +118,23 @@ public:
     const int cardinality(){return type_cardinality;};
     const int size(){return current_population.size();}
 };
+
+class Cells_Common : public Cells
+{
+protected:
+    int m_common_p_type;
+
+public:
+    Cells_Common(int type_no = 1, int init_common_p_type = 0, 
+    const std::vector<std::vector<double>>& type_tran = std::vector<std::vector<double>>(),
+    const std::vector<Cell>& initial_population = std::vector<Cell>(),int max_pop_size = std::numeric_limits<int>::max());
+    ~Cells_Common(){};
+
+    int common_p_type() const {return m_common_p_type;};
+    void set_common_p_type(int p_type){ m_common_p_type = p_type; };
+    void time_evolution(const std::vector<std::vector<double>>& offspring_distribution);
+};
+
 
 class Cell_Learn : public Cell
 {
@@ -146,6 +166,10 @@ public:
 
     void record(std::ofstream* out_population);
 };
+
+
+
+
 
 class Cells_Learn : public Population
 {
