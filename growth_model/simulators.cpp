@@ -28,8 +28,8 @@ void MBPRE::excecute(){
     for(int t = 0; t != end_time; t++){
         //record (this is first in order to record t = 0)
         record();
-        if(t == 0)
-            pop->record(out_pop_full);
+        //if(t == 0)
+           // pop->record_before_selection();
 
         time_evolution();
 
@@ -38,18 +38,22 @@ void MBPRE::excecute(){
 }
 
 void MBPRE::record(){
-    env->record(out_env);
-    pop->record(out_pop);
+    env->record();
+    pop->record();
 }
 
 void MBPRE::time_evolution(){
-    //population
-    pop->time_evolution(offspring_distributions[env->current_state()]);
-    pop->record(out_pop_full); //record to-be-discored cells in advance of selection.
-    pop->selection();
-
     //environment
-    env->next_state(time);
+    int current_state = env->current_state();
+    int next_state = env->next_state(time);
+
+
+    //population
+    pop->time_evolution(offspring_distributions[current_state], offspring_distributions[next_state]);
+    //pop->record_before_selection(); //record to-be-discored cells in advance of selection.
+    //pop->selection();
+
+
     time++;
 }
 
@@ -169,8 +173,18 @@ Markov_Environments::Markov_Environments(const std::vector<std::vector<double>>&
     set_transition(transit_func_mat);
 } 
 
-void Markov_Environments::record(std::ofstream* out){
-    *out << std::to_string(current_state()) << std::endl;
+std::vector<int> Markov_Environments::generate(const int n){
+    std::vector<int> res;
+    for(int i = 0; i != n; i++){
+        res.push_back(current_state());
+        next_state(i);
+    }
+
+    return res;
+}
+
+void Markov_Environments::record(){
+    *out_env << std::to_string(current_state()) << std::endl;
 }
 
 
@@ -193,8 +207,10 @@ std::vector<Cell> Cell::daughters(const int common_parent_type, const std::vecto
 
     const int p_type = common_parent_type;  //for simplification
     
-    int no_offsprings = std::discrete_distribution<int>(offspring_distribution[p_type].begin(), offspring_distribution[p_type].end())(mt);
+    //growth first
+    int no_offsprings = std::discrete_distribution<int>(offspring_distribution[type()].begin(), offspring_distribution[type()].end())(mt);
 
+    //then type-swithching
     std::vector<Cell> res;
     for(int i = 0; i != no_offsprings; i++){
         int next_type = std::discrete_distribution<int>(type_transition[p_type].begin(), type_transition[p_type].end())(mt);
@@ -258,9 +274,10 @@ void Cells::set_initial_population(const std::vector<Cell>& initial_population){
         assert(cell.type() < type_cardinality);
     }
     current_population = initial_population;
+    before_selection_population = initial_population;
 }
 
-void Cells::time_evolution(const std::vector<std::vector<double>>& offspring_distribution){
+void Cells::time_evolution(const std::vector<std::vector<double>>& offspring_distribution, const std::vector<std::vector<double>>& next_offspring_distribution){
     std::vector<Cell> new_population;
     for(auto cell : current_population){
         std::vector<Cell> daughters = cell.daughters(type_transition, offspring_distribution, mt);
@@ -270,9 +287,13 @@ void Cells::time_evolution(const std::vector<std::vector<double>>& offspring_dis
 
     current_population.clear();
     current_population = new_population;
+    before_selection_population = current_population;
+
+    selection();
 }
 
 void Cells::selection(){
+
     if(current_population.size() > maximum_population_size){
         std::vector<Cell> temp;
 
@@ -281,36 +302,27 @@ void Cells::selection(){
     }
 }
 
-void Cells::record(std::ofstream* out_population){
+void Cells::record(){
     for (auto cell : current_population){
-        cell.record(out_population);
+        cell.record(out_pop);
+    }
+    for (auto cell : before_selection_population){
+        cell.record(out_pop_full);
     }
 }
+
+
 
 Cells_Common::Cells_Common(int type_no , int init_common_p_type, 
     const std::vector<std::vector<double>>& type_tran,
     const std::vector<Cell>& initial_population,
-    int max_pop_size)
+    int max_pop_size) 
+    : Cells(type_no, type_tran, initial_population, max_pop_size)
 {
     set_common_p_type(init_common_p_type);
-    set_maximum_population_size(max_pop_size);
-    set_type_cardinality(type_no);
-    set_initial_population(initial_population);
-
-    if(type_tran.empty()){//default argument (uniform transition)
-        set_type_transition(std::vector<std::vector<double>>(type_cardinality, std::vector<double>(type_cardinality, 1.0)));
-    }
-    else
-    {
-        set_type_transition(type_tran);
-    }
-
-    //random generator
-    std::random_device rnd;
-    mt.seed(rnd());
 }
 
-void Cells_Common::time_evolution(const std::vector<std::vector<double>>& offspring_distribution){
+void Cells_Common::time_evolution(const std::vector<std::vector<double>>& offspring_distribution, const std::vector<std::vector<double>>& next_offspring_distribution){
 
     //new population
     std::vector<Cell> new_population;
@@ -325,8 +337,46 @@ void Cells_Common::time_evolution(const std::vector<std::vector<double>>& offspr
     current_population = new_population;
 
     //new shared parent type
-    m_common_p_type = std::discrete_distribution<int>(type_transition[m_common_p_type].begin(), type_transition[m_common_p_type].end())(mt);
 
+    std::vector<double>  offspring_no;
+    for(auto cell : current_population){
+            int no_offsprings = std::discrete_distribution<int>(next_offspring_distribution[cell.type()].begin(), next_offspring_distribution[cell.type()].end())(mt);
+
+            offspring_no.push_back(no_offsprings);
+    }
+    if(offspring_no.empty()){
+        m_common_p_type = 0;
+    }
+    else
+    {
+        int itr = std::discrete_distribution<int>(offspring_no.begin(), offspring_no.end())(mt);
+        m_common_p_type = current_population[itr].type();
+    }
+    
+
+
+    m_common_p_type = current_population.empty() ? 0 : current_population[0].type();
+
+    //update before_selection_population
+    before_selection_population = current_population;
+
+    selection();
+}
+
+void Cells_Common::set_initial_population(const std::vector<Cell>& initial_population){
+    Cells::set_initial_population(initial_population);
+    
+    m_common_p_type = initial_population.empty() ? 0 : current_population[0].type();
+}
+
+Cells_Common::Cells_Common(const Cells& cells)
+: Cells(cells){
+        m_common_p_type = current_population.empty() ? 0 : current_population[0].type();
+}
+
+void Cells_Common::record(){
+    Cells::record();
+    *out_shared_p_type << common_p_type() << std::endl;
 }
 
 
@@ -407,7 +457,7 @@ void Cells_Learn::selection(){
     }
 }
 
-void Cells_Learn::time_evolution(const std::vector<std::vector<double>>& offspring_distribution){
+void Cells_Learn::time_evolution(const std::vector<std::vector<double>>& offspring_distribution, const std::vector<std::vector<double>>& next_offspring_distribution){
     std::vector<Cell_Learn> new_population;
     for(auto cell : current_population){
         std::vector<Cell_Learn> daughters = cell.daughters(offspring_distribution, learning_rule, mt);
@@ -423,4 +473,155 @@ void Cells_Learn::record(std::ofstream* out_population){
     for (auto cell : current_population){
         cell.record(out_population);
     }
+}
+
+Cells_Infinite::Cells_Infinite(int type_no, const std::vector<std::vector<double>>& transit, const std::vector<double>& initial_pop){
+    set_type_cardinality(type_no);
+    set_type_transition(transit);
+    set_initial_population(initial_pop);
+    lambdas.push_back(0.0);
+}
+
+void Cells_Infinite::set_type_transition(const std::vector<std::vector<double>>& transit){
+    assert(transit.size() == type_cardinality);
+    for(int i = 0; i != type_cardinality; i++){
+        assert(transit[i].size() == type_cardinality);
+    }
+
+    type_transition = transit;
+}
+
+void Cells_Infinite::set_type_cardinality(int n){
+    assert(n > 0);
+    type_cardinality = n;
+}
+
+void Cells_Infinite::set_initial_population(const std::vector<double>& initial_pop){
+    assert(initial_pop.size() == cardinality());
+    current_pop = initial_pop;
+}
+
+void Cells_Infinite::record(){
+    if(out_pop_and_lambda == nullptr)
+        return;
+    
+    *out_pop_and_lambda << lambdas[lambdas.size() - 1] << " ";
+    for(auto i : current_pop){
+        *out_pop_and_lambda << i << " ";
+    }
+    *out_pop_and_lambda << std::endl;
+}
+
+void Cells_Infinite::time_evolution(const std::vector<std::vector<double>>& offspring_distribution, const std::vector<std::vector<double>>& next_offspring_distribution ){
+    //calculate expectation of offspring_distribution
+    std::vector<double> mean_daughters_no(cardinality(), 0.0);
+    for(int i = 0; i != cardinality(); i++){
+        double normalizer = 0.0;
+        double mean = 0.0;
+        for(int j = 0; j != offspring_distribution[i].size(); j++){
+            normalizer += offspring_distribution[i][j];
+            mean += j * offspring_distribution[i][j];
+        }
+        mean_daughters_no[i] = mean / normalizer;
+    }
+
+
+    std::vector<double> res(cardinality(), 0.0);
+    for(int i = 0; i != cardinality(); i++){
+        for(int j = 0; j != cardinality(); j++){
+            res[j] += current_pop[i] * mean_daughters_no[i] * type_transition[i][j]; //type_transition is assumed to be normalized
+        }
+    }
+
+    double growth_ratio = 0.0;
+    for(auto f : res){
+        growth_ratio += f;
+    }
+    for(int i = 0; i != cardinality(); i++)
+    {
+        res[i] /= growth_ratio;
+    }
+    
+    current_pop = res;
+    lambdas.push_back(log(growth_ratio));
+}
+
+Cells_Infinite_Common::Cells_Infinite_Common(Cells_Infinite cells)
+: Cells_Infinite(cells){
+    //random generator
+    std::random_device rnd;
+    mt.seed(rnd());
+
+    //initial p-type
+    std::discrete_distribution<int> disc(cells.current_pop.begin(), cells.current_pop.end());
+    common_p_type = disc(mt);
+}
+
+Cells_Infinite_Common::Cells_Infinite_Common(int type_no, const std::vector<std::vector<double>>& transit, const std::vector<double>& initial_pop) :
+Cells_Infinite_Common(Cells_Infinite(type_no, transit, initial_pop))
+{
+    
+}
+
+void Cells_Infinite_Common::time_evolution(const std::vector<std::vector<double>>& offspring_distribution, const std::vector<std::vector<double>>& next_offspring_distribution){
+    //calculate expectation of offspring_distribution
+    std::vector<double> mean_daughters_no(cardinality(), 0.0);
+    for(int i = 0; i != cardinality(); i++){
+        double normalizer = 0.0;
+        double mean = 0.0;
+        for(int j = 0; j != offspring_distribution[i].size(); j++){
+            normalizer += offspring_distribution[i][j];
+            mean += j * offspring_distribution[i][j];
+        }
+        mean_daughters_no[i] = mean / normalizer;
+    }
+
+    /*
+    //next
+    std::vector<double> next_mean_daughters_no(cardinality(), 0.0);
+    for(int i = 0; i != cardinality(); i++){
+        double normalizer = 0.0;
+        double mean = 0.0;
+        for(int j = 0; j != next_offspring_distribution[i].size(); j++){
+            normalizer += next_offspring_distribution[i][j];
+            mean += j * next_offspring_distribution[i][j];
+        }
+        next_mean_daughters_no[i] = mean / normalizer;
+    }*/
+
+    //determine common_p_type
+    std::vector<double> growth(cardinality(), 0.0);
+    double growth_ratio = 0.0;
+    for(int i = 0; i != cardinality(); i++){
+        double temp = current_pop[i] * mean_daughters_no[i];
+        growth_ratio += temp;
+        growth[i] = temp;
+    }
+    std::discrete_distribution<int> dist(growth.begin(), growth.end());
+    common_p_type = dist(mt);
+
+
+    //evolve current_pop
+    std::vector<double> res(cardinality(), 0.0);
+    for(int i = 0; i != cardinality(); i++){
+        for(int j = 0; j != cardinality(); j++){
+            res[j] = type_transition[common_p_type][j]; //type_transition is assumed to be normalized
+        }
+    }
+
+
+    current_pop = res;
+    lambdas.push_back(log(growth_ratio));
+    hist_common_p_type.push_back(common_p_type);
+}
+
+void Cells_Infinite_Common::record(){
+    if(out_pop_and_lambda == nullptr)
+        return;
+    
+    *out_pop_and_lambda << lambdas[lambdas.size() - 1] << " " << common_p_type << " ";
+    for(auto i : current_pop){
+        *out_pop_and_lambda << i << " ";
+    }
+    *out_pop_and_lambda << std::endl;
 }

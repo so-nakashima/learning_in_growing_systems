@@ -17,7 +17,7 @@ void test_env(){
     Markov_Environments env(tran, 2, init);
 
     std::ofstream out_env(".//res//environments.dat");
-    w.set_env_record(&out_env);
+    env.set_env_record(&out_env);
     w.set_environments(&env);
 
     w.excecute();
@@ -34,7 +34,7 @@ void test_env_cells(){
     Markov_Environments env(env_tran, 2, init);
 
     std::ofstream out_env(".//res//environments.dat");
-    w.set_env_record(&out_env);
+    env.set_env_record(&out_env);
     w.set_environments(&env);
 
     //cells
@@ -46,9 +46,10 @@ void test_env_cells(){
     std::ofstream out_pop_full(".//res//population_full.dat");
     cells.set_maximum_population_size(5);
 
+    cells.set_pop_record(&out_pop);
+    cells.set_pop_full_record(&out_pop_full);
+
     w.set_population(&cells);
-    w.set_pop_record(&out_pop);
-    w.set_pop_full_record(&out_pop_full);
 
 
     //replication
@@ -83,13 +84,13 @@ void file_read_test(){
 
     //record
     std::ofstream out_env(".//experiments//sim_2//res//env.dat");
-    w.set_env_record(&out_env);
+    env.set_env_record(&out_env);
     w.set_environments(&env);
     w.set_population(&cells);
     std::ofstream out_pop(".//experiments//sim_2//res//pop.dat");
     std::ofstream out_pop_full(".//experiments//sim_2//res//pop_full.dat");
-    w.set_pop_record(&out_pop);
-    w.set_pop_full_record(&out_pop_full);
+    cells.set_pop_record(&out_pop);
+    cells.set_pop_full_record(&out_pop_full);
 
     w.excecute();
 }
@@ -108,10 +109,10 @@ void test_analyze(){
     Lineage<Cell> lineage = read_lineage(in_pop);
     Lineage<Cell> lienage_full = read_lineage(in_pop_full);
 
-    std::ofstream out_lambda(".//experiments//sim_2//res//analyze//lambda.dat");
+    std::ofstream out_lambda(".//experiments//sim_2//res//analyze//lambda.dat", std::ios_base::app);
     out_lambda << lienage_full.lambda(10) << std::endl;
 
-    std::ofstream out_retro(".//experiments//sim_1//res//analyze//retro.dat");
+    std::ofstream out_retro(".//experiments//sim_2//res//analyze//retro.dat");
     std::function<double(Cell,Cell,int, int, int)> func = [](Cell p, Cell c,  int g, int p_type, int c_type){ //retrospective type transition
         if(p.type() == p_type && c.type() == c_type){
             return 1.0;
@@ -157,7 +158,7 @@ void test_analyze(){
 }
 
 void lambda_curve(){
-    std::ofstream out_lambda_curve(".//experiments//sim_1//res//analyze//lambda_curve.dat");
+    std::ofstream out_lambda_curve(".//experiments//sim_1//res//analyze//lambda_curve_infinite.dat");
 
     int mean_no = 200;
     for(int t = 0; t != 100; t++){
@@ -200,13 +201,13 @@ void lambda_curve(){
 
             //record
             std::ofstream out_env(".//experiments//sim_1//res//env.dat");
-            w.set_env_record(&out_env);
+            env.set_env_record(&out_env);
             w.set_environments(&env);
             w.set_population(&cells);
             std::ofstream out_pop(".//experiments//sim_1//res//pop.dat");
             std::ofstream out_pop_full(".//experiments//sim_1//res//pop_full.dat");
-            w.set_pop_record(&out_pop);
-            w.set_pop_full_record(&out_pop_full);
+            cells.set_pop_record(&out_pop);
+            cells.set_pop_full_record(&out_pop_full);
 
             w.excecute();
 
@@ -293,13 +294,13 @@ void test_learning()
 
     //record
     std::ofstream out_env(".//experiments//sim_2//res//env.dat");
-    w.set_env_record(&out_env);
+    env.set_env_record(&out_env);
     w.set_environments(&env);
     w.set_population(&cells);
     std::ofstream out_pop(".//experiments//sim_2//res//pop.dat");
     std::ofstream out_pop_full(".//experiments//sim_2//res//pop_full.dat");
-    w.set_pop_record(&out_pop);
-    w.set_pop_full_record(&out_pop_full);
+    cells.set_pop_record(&out_pop);
+    cells.set_pop_full_record(&out_pop_full);
 
     w.excecute();
 }
@@ -456,13 +457,13 @@ void lambda_sample(){
 
                 //record
                 std::ofstream out_env(".//experiments//sim_2//res//env.dat");
-                w.set_env_record(&out_env);
+                env.set_env_record(&out_env);
                 w.set_environments(&env);
                 w.set_population(&cells);
                 std::ofstream out_pop(".//experiments//sim_2//res//pop.dat");
                 std::ofstream out_pop_full(".//experiments//sim_2//res//pop_full.dat");
-                w.set_pop_record(&out_pop);
-                w.set_pop_full_record(&out_pop_full);
+                cells.set_pop_record(&out_pop);
+                cells.set_pop_full_record(&out_pop_full);
 
                 w.excecute();
 
@@ -534,13 +535,13 @@ void lambda_sample_highdim(){
 
             //record
             std::ofstream out_env(".//experiments//sim_2//res//env.dat");
-            w.set_env_record(&out_env);
+            env.set_env_record(&out_env);
             w.set_environments(&env);
             w.set_population(&cells);
             std::ofstream out_pop(".//experiments//sim_2//res//pop.dat");
             std::ofstream out_pop_full(".//experiments//sim_2//res//pop_full.dat");
-            w.set_pop_record(&out_pop);
-            w.set_pop_full_record(&out_pop_full);
+            cells.set_pop_record(&out_pop);
+            cells.set_pop_full_record(&out_pop_full);
 
             w.excecute();
 
@@ -556,4 +557,452 @@ void lambda_sample_highdim(){
     };
 
     output_lambdas_helper(coordinates, out_lambda_sample, func);
+}
+
+void common_transition_test(){
+
+
+    //initialize world setting
+    std::ifstream in_other(".//experiments//sim_2//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    MBPRE w;
+    w.set_end_time(std::stoi(parameters["end_time"]));
+
+
+    std::ifstream in_env(".//experiments//sim_2//env.dat");
+    Markov_Environments env = read_env(in_env);
+    std::ifstream in_cells(".//experiments//sim_2//for_lambda//initial_cells.dat");
+    std::ifstream in_cell_tran(".//experiments//sim_2//for_lambda//cell_type_tran.dat");
+    Cells_Common cells(read_cells(in_cells, in_cell_tran));
+    cells.set_maximum_population_size(10);
+    //cells.set_common_p_type(std::stoi(parameters["initial_p_type"]));
+
+
+    //replication
+    std::vector<std::vector<std::vector<double>>> replication;
+    std::ifstream in_repl(".//experiments//sim_2//replication.dat");
+    read3DTensor<double>(replication, in_repl);
+    w.set_offspring_distributions(replication);
+
+    //record
+    std::ofstream out_env(".//experiments//sim_2//res//env.dat");
+    env.set_env_record(&out_env);
+    std::ofstream out_pop(".//experiments//sim_2//res//pop.dat");
+    std::ofstream out_pop_full(".//experiments//sim_2//res//pop_full.dat");
+    std::ofstream out_shared_p_type(".//experiments//sim_2//res//shared_p_type.dat");
+    cells.set_pop_record(&out_pop);
+    cells.set_pop_full_record(&out_pop_full);
+    cells.set_out_shared_p_type(&out_shared_p_type);
+
+
+    w.set_environments(&env);
+    w.set_population(&cells);
+    w.excecute();
+}
+
+/*void check_fluctuating_relation_for_common_vs_ind(){
+    //initialize world setting
+    std::ifstream in_other(".//experiments//sim_2//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    const int avg_no = std::stoi(parameters["fluctuating_avg_no"]);
+
+    const int endtime = std::stoi(parameters["end_time"]);
+
+
+    std::vector<std::vector<std::vector<double>>> replication;
+    std::ifstream in_repl(".//experiments//sim_2//replication.dat");
+    read3DTensor<double>(replication, in_repl);
+
+
+    std::ofstream out_lambda(".//experiments//sim_2//res//analyze//lambda.dat");
+
+    std::ofstream out_res(".//experiments//sim_2//res//analyze//fluctuation.dat");
+    
+    double res = 0.0;
+    for(int i = 0; i != avg_no; i++){
+        //generate common env. sequence
+        std::ifstream in_env(".//experiments//sim_2//env.dat");
+        Markov_Environments env_temp = read_env(in_env);
+        std::vector<int> env_seq = env_temp.generate(endtime);
+
+        Environments_Sequence env(3, env_seq); 
+
+
+        //compute lambda for individual transition
+        //initialize world setting
+        
+        MBPRE w;
+        w.set_end_time(std::stoi(parameters["end_time"]));
+        std::ifstream in_other(".//experiments//sim_2//other.dat");
+        std::map<std::string, std::string> parameters = read_parameters(in_other);
+        w.set_end_time(std::stoi(parameters["end_time"]));
+
+
+
+        std::ifstream in_cells(".//experiments//sim_2//for_lambda//initial_cells.dat");
+        std::ifstream in_cell_tran(".//experiments//sim_2//for_lambda//cell_type_tran.dat");
+        Cells cells = read_cells(in_cells, in_cell_tran);
+        cells.set_maximum_population_size(1000);
+
+
+        //replication
+        w.set_offspring_distributions(replication);
+
+        //record
+        std::ofstream out_pop(".//experiments//sim_2//res//pop.dat");
+        std::ofstream out_pop_full(".//experiments//sim_2//res//pop_full.dat");
+        cells.set_pop_record(&out_pop);
+        cells.set_pop_full_record(&out_pop_full);
+
+
+        w.set_environments(&env);
+        w.set_population(&cells);
+        w.excecute();
+
+        std::ifstream in_env_rec(".//experiments//sim_2//res//env.dat");
+        std::vector<int> environments;
+        readVec(endtime, environments, in_env_rec);
+
+        std::ifstream in_pop(".//experiments//sim_2//res//pop.dat");
+        std::ifstream in_pop_full(".//experiments//sim_2//res//pop_full.dat");
+        Lineage<Cell> lineage = read_lineage(in_pop);
+        Lineage<Cell> lienage_full = read_lineage(in_pop_full);
+
+        double lambda_ind = lienage_full.lambda(1000);
+        out_lambda << lambda_ind << std::endl;
+        
+        //compute lambda for common transition
+        MBPRE w_;
+        w_.set_end_time(std::stoi(parameters["end_time"]));
+
+
+        std::ifstream in_cells_(".//experiments//sim_2//for_lambda//initial_cells.dat");
+        std::ifstream in_cell_tran_(".//experiments//sim_2//for_lambda//cell_type_tran.dat");
+        Cells_Common cells_(read_cells(in_cells_, in_cell_tran_));
+        //cells.set_common_p_type(std::stoi(parameters["initial_p_type"]));
+
+
+        //replication
+        w_.set_offspring_distributions(replication);
+
+        //record
+        std::ofstream out_pop_(".//experiments//sim_2//res//pop.dat");
+        std::ofstream out_pop_full_(".//experiments//sim_2//res//pop_full.dat");
+        std::ofstream out_shared_p_type_(".//experiments//sim_2//res//shared_p_type.dat");
+        cells_.set_pop_record(&out_pop_);
+        cells_.set_pop_full_record(&out_pop_full_);
+        cells_.set_out_shared_p_type(&out_shared_p_type_);
+
+
+        w_.set_environments(&env);
+        w_.set_population(&cells_);
+        w_.excecute();
+
+
+        std::ifstream in_env_rec_(".//experiments//sim_2//res//env.dat");
+        std::vector<int> environments_;
+        readVec(endtime, environments_, in_env_rec_);
+
+        std::ifstream in_pop_full_(".//experiments//sim_2//res//pop_full.dat");
+        Lineage<Cell> lienage_full_ = read_lineage(in_pop_full_);
+
+
+        double lambda_common =  lienage_full_.lambda(1000);
+        out_lambda << lambda_common << std::endl;
+
+        //compute average
+        res += (exp((- lambda_ind + lambda_common) * (endtime-1))) / avg_no;
+    }
+
+    out_res << "mean: " << res << std::endl;
+}*/
+
+double test_cells_infinite(){
+    //initialize world setting
+    std::ifstream in_other(".//experiments//sim_3//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    MBPRE w;
+    w.set_end_time(std::stoi(parameters["end_time"]));
+
+
+    std::ifstream in_env(".//experiments//sim_3//env.dat");
+    Markov_Environments env = read_env(in_env);
+
+    std::ifstream in_cells(".//experiments//sim_3//initial_cells.dat");
+    std::ifstream in_cell_tran(".//experiments//sim_3//cell_type_tran.dat");
+    Cells_Infinite cells(read_cells_inifinite(in_cells, in_cell_tran));
+
+    //replication
+    std::vector<std::vector<std::vector<double>>> replication;
+    std::ifstream in_repl(".//experiments//sim_3//replication.dat");
+    read3DTensor<double>(replication, in_repl);
+    w.set_offspring_distributions(replication);
+
+    //record
+    std::ofstream out_env(".//experiments//sim_3//res//env.dat");
+    env.set_env_record(&out_env);
+    std::ofstream out_pop(".//experiments//sim_3//res//pop.dat");
+    cells.set_output(&out_pop);
+
+    w.set_environments(&env);
+    w.set_population(&cells);
+    w.excecute();
+
+    double res = 0.0;
+    for(auto l : cells.lambdas){
+        res += l;
+    }
+    return res;
+}
+
+double test_cells_infinite_common(){
+    //initialize world setting
+    std::ifstream in_other(".//experiments//sim_3//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    MBPRE w;
+    w.set_end_time(std::stoi(parameters["end_time"]));
+
+
+    std::ifstream in_env(".//experiments//sim_3//env.dat");
+    Markov_Environments env = read_env(in_env);
+
+    std::ifstream in_cells(".//experiments//sim_3//initial_cells.dat");
+    std::ifstream in_cell_tran(".//experiments//sim_3//cell_type_tran.dat");
+    Cells_Infinite_Common cells(read_cells_inifinite(in_cells, in_cell_tran));
+
+    //replication
+    std::vector<std::vector<std::vector<double>>> replication;
+    std::ifstream in_repl(".//experiments//sim_3//replication.dat");
+    read3DTensor<double>(replication, in_repl);
+    w.set_offspring_distributions(replication);
+
+    //record
+    std::ofstream out_env(".//experiments//sim_3//res//env.dat");
+    env.set_env_record(&out_env);
+    std::ofstream out_pop(".//experiments//sim_3//res//pop.dat");
+    cells.set_output(&out_pop);
+
+    w.set_environments(&env);
+    w.set_population(&cells);
+    w.excecute();
+
+    double res = 0.0;
+    for(auto l : cells.lambdas){
+        res += l;
+    }
+    return res;
+}
+
+double lambda_cells_infinite(int env_no, const std::vector<int> envs){
+    //initialize world setting
+    std::ifstream in_other(".//experiments//sim_3//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    MBPRE w;
+    w.set_end_time(std::stoi(parameters["end_time"]));
+
+
+    Environments_Sequence env(env_no, envs);
+
+    std::ifstream in_cells(".//experiments//sim_3//initial_cells.dat");
+    std::ifstream in_cell_tran(".//experiments//sim_3//cell_type_tran.dat");
+    Cells_Infinite cells(read_cells_inifinite(in_cells, in_cell_tran));
+
+    //replication
+    std::vector<std::vector<std::vector<double>>> replication;
+    std::ifstream in_repl(".//experiments//sim_3//replication.dat");
+    read3DTensor<double>(replication, in_repl);
+    w.set_offspring_distributions(replication);
+
+    //record
+    std::ofstream out_pop(".//experiments//sim_3//res//pop.dat");
+    cells.set_output(&out_pop);
+
+    w.set_environments(&env);
+    w.set_population(&cells);
+    w.excecute();
+
+    double res = 0.0;
+    for(auto l : cells.lambdas){
+        res += l;
+    }
+    return res;
+}
+
+double lambda_cells_infinite_common(int env_no, const std::vector<int> envs){
+    //initialize world setting
+    std::ifstream in_other(".//experiments//sim_3//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    MBPRE w;
+    w.set_end_time(std::stoi(parameters["end_time"]));
+
+
+    Environments_Sequence env(env_no, envs);
+
+    std::ifstream in_cells(".//experiments//sim_3//initial_cells.dat");
+    std::ifstream in_cell_tran(".//experiments//sim_3//cell_type_tran.dat");
+    Cells_Infinite_Common cells(read_cells_inifinite(in_cells, in_cell_tran));
+
+    //replication
+    std::vector<std::vector<std::vector<double>>> replication;
+    std::ifstream in_repl(".//experiments//sim_3//replication.dat");
+    read3DTensor<double>(replication, in_repl);
+    w.set_offspring_distributions(replication);
+
+    //record
+    std::ofstream out_pop(".//experiments//sim_3//res//pop.dat");
+    cells.set_output(&out_pop);
+
+    w.set_environments(&env);
+    w.set_population(&cells);
+    w.excecute();
+
+    double res = 0.0;
+    for(auto l : cells.lambdas){
+        res += l;
+    }
+    return res;
+}
+
+double lambda_cells_infinite_common(int env_no, const std::vector<int> envs, std::vector<int>& vec){
+    //initialize world setting
+    std::ifstream in_other(".//experiments//sim_3//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    MBPRE w;
+    w.set_end_time(std::stoi(parameters["end_time"]));
+
+
+    Environments_Sequence env(env_no, envs);
+
+    std::ifstream in_cells(".//experiments//sim_3//initial_cells.dat");
+    std::ifstream in_cell_tran(".//experiments//sim_3//cell_type_tran.dat");
+    Cells_Infinite_Common cells(read_cells_inifinite(in_cells, in_cell_tran));
+
+    cells.current_pop[0] = (0.22118 * 0.8 + 0.05415 * 0.2) * 3.0;
+    cells.current_pop[1] = (0.05595 * 0.8 + 0.22118 * 0.2) * 3.0;
+    cells.current_pop[2] = (0.05415 * 0.8 + 0.05595 * 0.2) * 3.0;
+
+    //replication
+    std::vector<std::vector<std::vector<double>>> replication;
+    std::ifstream in_repl(".//experiments//sim_3//replication.dat");
+    read3DTensor<double>(replication, in_repl);
+    w.set_offspring_distributions(replication);
+
+    //record
+    std::ofstream out_pop(".//experiments//sim_3//res//pop.dat");
+    cells.set_output(&out_pop);
+
+    w.set_environments(&env);
+    w.set_population(&cells);
+    w.excecute();
+
+    vec = cells.hist_common_p_type;
+
+    double res = 0.0;
+    for(auto l : cells.lambdas){
+        res += l;
+    }
+    return res;
+}
+
+
+
+void check_fluctuating_relation_for_common_vs_ind(){
+    std::ifstream in_other(".//experiments//sim_3//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    const int avg_no = std::stoi(parameters["fluctuating_avg_no"]);
+    const int end_time = std::stoi(parameters["end_time"]);
+
+    std::ofstream out_lambda(".//experiments//sim_3//res//analyze//lambda.dat");
+    std::ofstream out_res(".//experiments//sim_3//res//analyze//fluctuation.dat");
+
+    double res = 0.0;
+    for(int i = 0; i != avg_no; i++){
+        std::ifstream in_env(".//experiments//sim_3//env.dat");
+        Markov_Environments env = read_env(in_env);
+        std::vector<int> envs = env.generate(end_time + 1);
+
+        double lambda_ind = lambda_cells_infinite(env.cardinality(), envs);
+        double lambda_common = lambda_cells_infinite_common(env.cardinality(), envs);
+        out_lambda << lambda_ind << " " << lambda_common << std::endl;
+        res += exp(lambda_common - lambda_ind) / avg_no;
+    }
+
+    out_res << res << std::endl;
+}
+
+void estimate_y_z_distribution(){
+    std::ifstream in_other(".//experiments//sim_3//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    const int end_time = std::stoi(parameters["end_time"]);
+    const int env_type_no = std::stoi(parameters["env_type_no"]);
+    const int z_type_no = std::stoi(parameters["z_type_no"]);
+
+    std::ifstream in_pop(".//experiments//sim_3//res//pop.dat");
+    std::vector<std::vector<double>> pop_data;
+    readMat(end_time + 1, z_type_no+2, pop_data, in_pop);
+
+    std::vector<std::vector<double>> res(env_type_no, std::vector<double>(z_type_no));
+    std::ofstream out_y_z(".//experiments//sim_3//res//analyze//y-z.dat");
+
+    std::ifstream in_env(".//experiments//sim_3//res//env.dat");
+    std::vector<int> env;
+    readVec(end_time, env, in_env);
+
+    const double inv_end_time = 1.0 / end_time;
+    for(int i = 0; i != end_time; i++){
+        const int c_env = env[i]; //current_env
+        const int c_p_type = pop_data[i+1][1];  //current_common_p_type
+
+        res[c_env][c_p_type] += inv_end_time;
+    }
+
+    out_mat(res, &out_y_z);
+}
+
+double lambda_base(int end_time, std::vector<int> envs, std::vector<int> z_seq, const std::vector<std::vector<double>>& y_z_dist, const std::vector<double>& y_dist, const std::vector<double>& z_dist){
+    double res = 0.0;
+    for(int t = 0; t != end_time; t++){
+        res += log(2) + log(y_z_dist[envs[t]][z_seq[t]]) - log(y_dist[envs[t]]) - log(z_dist[z_seq[t]]);
+    }
+    return res;
+}
+
+void check_fluctuating_relation_for_common_vs_base(){
+    std::ifstream in_other(".//experiments//sim_3//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    const int avg_no = std::stoi(parameters["fluctuating_avg_no"]);
+    const int end_time = std::stoi(parameters["end_time"]);
+    const int env_type_no = std::stoi(parameters["env_type_no"]);
+    const int z_type_no = std::stoi(parameters["z_type_no"]);
+
+    std::ofstream out_lambda(".//experiments//sim_3//res//analyze//lambda.dat");
+    std::ofstream out_res(".//experiments//sim_3//res//analyze//fluctuation_common_base.dat");
+
+    std::ifstream in_y_z(".//experiments//sim_3//res//analyze//y-z_100000.dat");
+    std::vector<std::vector<double>> y_z_dist;
+    readMat(env_type_no, z_type_no, y_z_dist, in_y_z);
+    std::vector<double> y_dist(env_type_no, 0.0), z_dist(z_type_no, 0.0);
+    for(int i = 0; i != env_type_no; i++){
+        for(int j = 0; j != z_type_no; j++){
+            y_dist[i] += y_z_dist[i][j];
+            z_dist[j] += y_z_dist[i][j];
+        }
+    }
+
+    double res = 0.0;
+    for(int i = 0; i != avg_no; i++){
+        std::ifstream in_env(".//experiments//sim_3//env.dat");
+        Markov_Environments env = read_env(in_env);
+        std::vector<int> envs = env.generate(end_time + 1);
+
+        std::vector<int> z_seq;
+
+        //double lambda_ind = lambda_cells_infinite(env.cardinality(), envs);
+        double lambda_common = lambda_cells_infinite_common(env.cardinality(), envs, z_seq);
+        double lambda_other = lambda_base(end_time, envs, z_seq, y_z_dist, y_dist, z_dist);
+        out_lambda << lambda_common << " " << lambda_other << std::endl;
+        res += exp(lambda_common - lambda_other) / avg_no;
+    }
+
+    out_res << res << std::endl;
 }

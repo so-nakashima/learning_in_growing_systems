@@ -98,3 +98,31 @@ Cells_Learn read_cells_learn(std::ifstream& in){
     
     return res;
 }
+
+Cells_Infinite read_cells_inifinite(std::ifstream& init_cells, std::ifstream& transition){
+    //std::ifstream init_cells(path_init_cells);
+    //std::ifstream transition(path_transition);
+
+    std::vector<double> init_pop;
+    int type_no;
+    init_cells >> type_no;
+    double sum = 0.0;
+    for(int i = 0; i != type_no; i++){
+        double temp;
+        init_cells >> temp;
+        init_pop.push_back(temp);
+        sum += temp;
+    }
+    //normalization
+    for(int i = 0; i != type_no; i++){
+        init_pop[i] /= sum;
+    }
+
+
+    std::vector<std::vector<double>> transit;
+    readMat<double>(type_no, type_no, transit, transition);
+
+    Cells_Infinite res(type_no, transit, init_pop); 
+
+    return res;
+}

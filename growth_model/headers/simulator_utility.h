@@ -159,3 +159,14 @@ format:
 <length of replication histroty> <entries of replication history: vector> //see also readVec
 <length of memory> <entries of memory: vector>
 */
+
+Cells_Infinite read_cells_inifinite(std::ifstream& init_cells, std::ifstream& transition);
+/*
+init_cells
+<type_no>
+<type_1_fraction> <type_2_fraction> ... <type_n_fraction>
+
+not necessary to be normalized
+
+transition: same format as read_cell
+*/
