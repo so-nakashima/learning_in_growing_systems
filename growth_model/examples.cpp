@@ -1076,13 +1076,14 @@ void test_learning_common()
 {
     //set directories
     const std::string setting_rel_path = ".//experiments//sim_2_no_growth_comp";
-    const std::string output_rel_path = ".//experiments//sim_2_no_growth_comp//res//without_learning";
+    const std::string output_rel_path_4_common = ".//experiments//sim_2_no_growth_comp//res//common";
+    const std::string output_rel_path_4_individual = ".//experiments//sim_2_no_growth_comp//res//learning";
 
     //read paramers and define const variables
-    std::ifstream in_other(setting_rel_path + "other.dat");
+    std::ifstream in_other(setting_rel_path + "//other.dat");
     std::map<std::string, std::string> parameters = read_parameters(in_other);
     const int type_no = std::stoi(parameters["type_no"]);
-    const double learning_rate = std::stod(parameters["learing_rate"]);
+    const double learning_rate = std::stod(parameters["learning_rate"]);
 
     auto learning_rule = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
         //update ancestral jump
@@ -1098,5 +1099,6 @@ void test_learning_common()
         tran = jump_hist;
     };
 
-    sim_learning(setting_rel_path, output_rel_path, learning_rule, true);
+    sim_learning(setting_rel_path, output_rel_path_4_common, learning_rule, true);
+    sim_learning(setting_rel_path, output_rel_path_4_individual, learning_rule, false);
 }

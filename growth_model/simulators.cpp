@@ -588,7 +588,7 @@ void Cells_Learn_Common::time_evolution(const std::vector<std::vector<double>> &
     }
 
     //set transition matrix (and other elements) to common one learned by the spine cell
-    for (auto cell : daughters_population)
+    for (auto& cell : daughters_population)
     {
         cell.set_transition(spine_cell.transition);
         cell.set_replication_history(spine_cell.replication_history);
