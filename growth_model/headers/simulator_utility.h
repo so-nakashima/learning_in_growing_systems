@@ -6,8 +6,8 @@
 #include <string>
 #include "simulators.h"
 
-template<typename T>
-void readMat(std::vector<std::vector<T>>& mat, std::ifstream& in);
+template <typename T>
+void readMat(std::vector<std::vector<T>> &mat, std::ifstream &in);
 /*
 format:
 n  m
@@ -17,24 +17,24 @@ a_21 a_22 ... a_2m
 .
 a_n1 a_n2 ... a_nm
 */
-template<typename T>
-void readMat(const int n, const int m, std::vector<std::vector<T>>& mat, std::ifstream& in);
+template <typename T>
+void readMat(const int n, const int m, std::vector<std::vector<T>> &mat, std::ifstream &in);
 
-template<typename T>
-void readVec(std::vector<T>& vec, std::ifstream& in);
+template <typename T>
+void readVec(std::vector<T> &vec, std::ifstream &in);
 /*
 format:
 n
 a_1 a_2 ... a_n
 */
 
-template<typename T>
-void read3DTensor(const int n, const int m, const int l, std::vector< std::vector< std::vector<T> > >& tensor, std::ifstream& in);
+template <typename T>
+void read3DTensor(const int n, const int m, const int l, std::vector<std::vector<std::vector<T>>> &tensor, std::ifstream &in);
 
-template<typename T>
-void read3DTensor(std::vector< std::vector< std::vector<T> > >& tensor, std::ifstream& in);
+template <typename T>
+void read3DTensor(std::vector<std::vector<std::vector<T>>> &tensor, std::ifstream &in);
 
-Cells read_cells(std::ifstream& init_cells, std::ifstream& transition);
+Cells read_cells(std::ifstream &init_cells, std::ifstream &transition);
 /*
 format
 init_cells:
@@ -49,8 +49,7 @@ a_21 a_22 ... a_2n
 a_n1 a_n2 ... a_nn
 */
 
-
-Markov_Environments read_env(std::ifstream& in_env);
+Markov_Environments read_env(std::ifstream &in_env);
 /*
 format:
 env_state_no(=n)
@@ -62,8 +61,7 @@ a_21 a_22 ... a_2n
 a_n1 a_n2 ... a_nn
 */
 
-
-MBPRE read_mbpre(std::ifstream& in);
+MBPRE read_mbpre(std::ifstream &in);
 /*
 format:
 endtime <value-of-endtime>
@@ -72,22 +70,24 @@ endtime <value-of-endtime>
 the first collum is dummy for readability
 */
 
-
-
-template<typename T>
-void readMat(std::vector<std::vector<T>>& mat, std::ifstream& in){ 
+template <typename T>
+void readMat(std::vector<std::vector<T>> &mat, std::ifstream &in)
+{
     int n, m;
     in >> n >> m;
 
-    readMat(n,m,mat, in);
+    readMat(n, m, mat, in);
 }
 
-template<typename T>
-void readMat(const int n, const int m, std::vector<std::vector<T>>& mat, std::ifstream& in){ 
+template <typename T>
+void readMat(const int n, const int m, std::vector<std::vector<T>> &mat, std::ifstream &in)
+{
     mat.clear();
-    for(int i = 0; i != n; i++){
+    for (int i = 0; i != n; i++)
+    {
         std::vector<T> temp;
-        for(int j = 0; j != m; j++){
+        for (int j = 0; j != m; j++)
+        {
             T elem;
             in >> elem;
             temp.push_back(elem);
@@ -96,36 +96,39 @@ void readMat(const int n, const int m, std::vector<std::vector<T>>& mat, std::if
     }
 }
 
-
-
-
-
-template<typename T>
-void readVec(const int n, std::vector<T>& vec, std::ifstream& in){ 
+template <typename T>
+void readVec(const int n, std::vector<T> &vec, std::ifstream &in)
+{
     vec.clear();
-    for(int i = 0; i != n; i++){
-       T temp;
-       in >> temp;
-       vec.push_back(temp);
-    }   
+    for (int i = 0; i != n; i++)
+    {
+        T temp;
+        in >> temp;
+        vec.push_back(temp);
+    }
 }
 
-template<typename T>
-void readVec(std::vector<T>& vec, std::ifstream& in){ 
+template <typename T>
+void readVec(std::vector<T> &vec, std::ifstream &in)
+{
 
     int n;
     in >> n;
     readVec(n, vec, in);
 }
 
-template<typename T>
-void read3DTensor(const int n, const int m,  const int l, std::vector<std::vector<std::vector<T>>>& tensor, std::ifstream& in){ 
+template <typename T>
+void read3DTensor(const int n, const int m, const int l, std::vector<std::vector<std::vector<T>>> &tensor, std::ifstream &in)
+{
     tensor.clear();
-    for(int i = 0; i != n; i++){
+    for (int i = 0; i != n; i++)
+    {
         std::vector<std::vector<T>> mat;
-        for(int j = 0; j != m; j++){
+        for (int j = 0; j != m; j++)
+        {
             std::vector<T> vec;
-            for(int k = 0; k != l; k++){
+            for (int k = 0; k != l; k++)
+            {
                 T temp;
                 in >> temp;
                 vec.push_back(temp);
@@ -136,17 +139,20 @@ void read3DTensor(const int n, const int m,  const int l, std::vector<std::vecto
     }
 }
 
-template<typename T>
-void read3DTensor(std::vector<std::vector<std::vector<T>>>& tensor, std::ifstream& in){ 
-    int n,m,l;
+template <typename T>
+void read3DTensor(std::vector<std::vector<std::vector<T>>> &tensor, std::ifstream &in)
+{
+    int n, m, l;
     in >> n >> m >> l;
-    read3DTensor(n,m,l, tensor, in);
+    read3DTensor(n, m, l, tensor, in);
 }
 
-std::map<std::string, std::string> read_parameters(std::ifstream&);
+std::map<std::string, std::string> read_parameters(std::ifstream &);
 //to be converted from string to desired type
 
-Cells_Learn read_cells_learn(std::ifstream& init_cells);
+Cells_Learn read_cells_learn(std::ifstream &init_cells);
+Cells_Learn *new_cells_learn_from_read(std::ifstream &in);
+Cells_Learn_Common *new_cells_learn_common_from_read(std::ifstream &in);
 /*
 format: 
 <type_no> <cell_no> <max_cell_no>
@@ -160,7 +166,7 @@ format:
 <length of memory> <entries of memory: vector>
 */
 
-Cells_Infinite read_cells_inifinite(std::ifstream& init_cells, std::ifstream& transition);
+Cells_Infinite read_cells_inifinite(std::ifstream &init_cells, std::ifstream &transition);
 /*
 init_cells
 <type_no>

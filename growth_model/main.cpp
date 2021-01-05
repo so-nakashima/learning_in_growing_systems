@@ -11,13 +11,13 @@ int main()
    //test_analyze();
 
    //test_learning();
-   lambda_curve();
+   //lambda_curve_infinite();
 
-   //graphic_test();
+   //graphic_infinite();
    //lambda_sample();
 
-   //lambda_sample_highdim();
-   
+   //lambda_sample_highdim_infinite();
+
    //common_transition_test();
    //test_analyze();
 
@@ -27,4 +27,6 @@ int main()
    //estimate_y_z_distribution();
 
    //check_fluctuating_relation_for_common_vs_base();
-}  
+
+   test_learning_common();
+}
