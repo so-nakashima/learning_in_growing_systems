@@ -235,7 +235,7 @@ std::vector<Cell> Cell::daughters(const int common_parent_type, const std::vecto
     for (int i = 0; i != no_offsprings; i++)
     {
         int next_type = std::discrete_distribution<int>(type_transition[p_type].begin(), type_transition[p_type].end())(mt);
-        res.push_back(Cell(next_type, m_ID + std::to_string(i)));
+        res.push_back(Cell(next_type, m_ID + "." + std::to_string(i)));
     }
 
     return res;
@@ -438,7 +438,7 @@ std::vector<Cell_Learn> const Cell_Learn::daughters(const std::vector<std::vecto
         learning_rule(type(), next_type, no_offsprings, temp_tran_mat, temp_jump, temp_rep_hist, temp_mem, mt);
 
         res.push_back(
-            Cell_Learn(next_type, m_ID + std::to_string(i),
+            Cell_Learn(next_type, m_ID + "." + std::to_string(i),
                        temp_jump,
                        temp_tran_mat,
                        temp_rep_hist,
@@ -588,7 +588,7 @@ void Cells_Learn_Common::time_evolution(const std::vector<std::vector<double>> &
     }
 
     //set transition matrix (and other elements) to common one learned by the spine cell
-    for (auto& cell : daughters_population)
+    for (auto &cell : daughters_population)
     {
         cell.set_transition(spine_cell.transition);
         cell.set_replication_history(spine_cell.replication_history);

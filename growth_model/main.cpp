@@ -28,5 +28,6 @@ int main()
 
    //check_fluctuating_relation_for_common_vs_base();
 
-   test_learning_common();
+   //test_learning_common();
+   test_lineage_push();
 }

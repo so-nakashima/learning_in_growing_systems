@@ -105,6 +105,7 @@ public:
 
     int type() const { return m_type; }
     std::string id() const { return m_ID; }
+    void set_id(const std::string &str) { m_ID = str; };
 
     void record(std::ofstream *out_population);
 };

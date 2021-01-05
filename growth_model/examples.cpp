@@ -1102,3 +1102,64 @@ void test_learning_common()
     sim_learning(setting_rel_path, output_rel_path_4_common, learning_rule, true);
     sim_learning(setting_rel_path, output_rel_path_4_individual, learning_rule, false);
 }
+
+void compare_common_and_individual_learning()
+{
+    //set directories
+    const std::string setting_rel_path = ".//experiments//sim_2_no_growth_comp";
+    const std::string output_rel_path_4_common = ".//experiments//sim_2_no_growth_comp//res//common";
+    const std::string output_rel_path_4_individual = ".//experiments//sim_2_no_growth_comp//res//learning";
+
+    //read paramers and define const variables
+    std::ifstream in_other(setting_rel_path + "//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+
+    //online EM
+    const int type_no = std::stoi(parameters["type_no"]);
+    const double learning_rate = std::stod(parameters["learning_rate"]);
+
+    auto learning_rule = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
+        //update ancestral jump
+        for (int i = 0; i != type_no; i++)
+        {
+            for (int j = 0; j != type_no; j++)
+            {
+                jump_hist[i][j] = (1 - learning_rate) * jump_hist[i][j] + learning_rate * ((i == p_type && j == d_type) ? 1.0 : 0.0);
+            }
+        }
+
+        //update transition using ancestral jump
+        tran = jump_hist;
+    };
+
+    //execute simulation
+    sim_learning(setting_rel_path, output_rel_path_4_common, learning_rule, true);
+    sim_learning(setting_rel_path, output_rel_path_4_individual, learning_rule, false);
+
+    //draw graphs
+    //construct lineage
+    const int endtime = std::stoi(parameters["end_time"]);
+    const int mem_no = std::stoi(parameters["mem_no"]);
+}
+
+void test_lineage_push()
+{
+    std::ifstream in_other(".//experiments//sim_2_no_growth_comp//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    const int endtime = std::stoi(parameters["end_time"]);
+    const int mem_no = std::stoi(parameters["mem_no"]);
+    const int type_no = std::stoi(parameters["type_no"]);
+
+    std::ifstream in_env(".//experiments//sim_2_no_growth_comp//res//learning//env_res.dat");
+    std::vector<int> environments;
+    readVec(endtime, environments, in_env);
+
+    std::ifstream in_pop(".//experiments//sim_2_no_growth_comp//res//learning//pop.dat");
+    std::ifstream in_pop_full(".//experiments//sim_2_no_growth_comp//res//learning//pop_full.dat");
+    Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, mem_no, in_pop);
+    Lineage<Cell_Learn> lienage_orginal = read_learning_lineage(type_no, mem_no, in_pop);
+
+    lineage.push(lineage);
+
+    lineage.push(lineage);
+}
