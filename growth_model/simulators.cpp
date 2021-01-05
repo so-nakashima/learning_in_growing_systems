@@ -235,7 +235,7 @@ std::vector<Cell> Cell::daughters(const int common_parent_type, const std::vecto
     for (int i = 0; i != no_offsprings; i++)
     {
         int next_type = std::discrete_distribution<int>(type_transition[p_type].begin(), type_transition[p_type].end())(mt);
-        res.push_back(Cell(next_type, m_ID + "." + std::to_string(i)));
+        res.push_back(Cell(next_type, m_ID + "S" + std::to_string(i)));
     }
 
     return res;
@@ -438,7 +438,7 @@ std::vector<Cell_Learn> const Cell_Learn::daughters(const std::vector<std::vecto
         learning_rule(type(), next_type, no_offsprings, temp_tran_mat, temp_jump, temp_rep_hist, temp_mem, mt);
 
         res.push_back(
-            Cell_Learn(next_type, m_ID + "." + std::to_string(i),
+            Cell_Learn(next_type, m_ID + "S" + std::to_string(i),
                        temp_jump,
                        temp_tran_mat,
                        temp_rep_hist,

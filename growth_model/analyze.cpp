@@ -20,7 +20,7 @@ Lineage<Cell> read_lineage(std::ifstream &in)
 
         //current generation
         const int no_dots = 0;
-        std::count(id.begin(), id.end(), '.');
+        std::count(id.begin(), id.end(), 'S');
 
         if (no_dots + 1 != gen)
         {
@@ -60,7 +60,7 @@ Lineage<Cell_Learn> read_learning_lineage(int type_no, int memory_no, std::ifstr
         Cell_Learn c(type, id, ancestral_jump, transition, replication_history, mem);
         pop_map[id] = c;
 
-        const int no_dots = std::count(id.begin(), id.end(), '.');
+        const int no_dots = std::count(id.begin(), id.end(), 'S');
         if (no_dots + 1 != gen)
         {
             pop.push_back(current_generation_pop);
@@ -82,10 +82,10 @@ namespace Lineage_utility
         std::string head = str;
 
         //split str into head and tail if '.' exists (gen >= 1)
-        if (std::count(str.begin(), str.end(), '.') != 0)
+        if (std::count(str.begin(), str.end(), 'S') != 0)
         {
             //seek the first "."
-            const auto fst_dot_index = str.find(".");
+            const auto fst_dot_index = str.find("S");
 
             //the head string is constructed later
             res.insert(0, str, fst_dot_index, str.size() - fst_dot_index + 1);
