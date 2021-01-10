@@ -1,19 +1,31 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-      {
-        "type": "shell",
-        "label": "g++ build active file",
-        "command": "/usr/bin/g++",
-        "args": ["-g", "${fileDirname}/*.cpp", "-o", "${fileDirname}/a.out", "-std=c++17", "-I/usr/include/python3.8", "-lpython3.8", "-I${workspaceFolder}/growth_model/headers"],
-        "options": {
-          "cwd": "/usr/bin"
-        },
-        "problemMatcher": ["$gcc"],
-        "group": {
-          "kind": "build",
-          "isDefault": true
-        }
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "g++ build active file",
+      "command": "/usr/bin/g++",
+      "args": [
+        "-g",
+        "-O3",
+        "${fileDirname}/*.cpp",
+        "-o",
+        "${fileDirname}/a.out",
+        "-std=c++17",
+        "-I/usr/include/python3.8",
+        "-lpython3.8",
+        "-I${workspaceFolder}/growth_model/headers"
+      ],
+      "options": {
+        "cwd": "/usr/bin"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
       }
-    ]
-  }
+    }
+  ]
+}

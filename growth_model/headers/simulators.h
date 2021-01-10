@@ -63,7 +63,7 @@ private:
     std::mt19937_64 mt;
 
     //recording
-    std::ofstream *out_env;
+    std::ofstream *out_env = nullptr;
 
 public:
     Markov_Environments(const std::vector<std::vector<double>> &transit_mat = std::vector<std::vector<double>>(),
@@ -85,7 +85,7 @@ public:
     std::vector<int> generate(const int n);
 
     void set_env_record(std::ofstream *out) { out_env = out; };
-    virtual void record();
+    virtual void record() override;
 };
 
 class Cell
@@ -247,7 +247,7 @@ public:
 
     void set_type_cardinality(const int type_no) { m_type_cardinality = type_no; };
     void set_maximum_population_size(const int max_size) { maximum_population_size = max_size; };
-    void set_initial_population(const std::vector<Cell_Learn> &initial_population)
+    virtual void set_initial_population(const std::vector<Cell_Learn> &initial_population)
     {
         current_population = initial_population;
         before_selection = initial_population;
@@ -282,8 +282,9 @@ public:
     Cells_Learn_Common(const Cells_Learn &c);
     ~Cells_Learn_Common() = default;
 
-    void set_spine_cell(Cell_Learn c);
+    void set_spine_cell(const Cell_Learn &c);
     void time_evolution(const std::vector<std::vector<double>> &offspring_distribution, const std::vector<std::vector<double>> &next_offspring_distribution = std::vector<std::vector<double>>()) override;
+    void set_out_spine(std::ofstream *out) { out_spine = out; };
     void record() override;
 };
 

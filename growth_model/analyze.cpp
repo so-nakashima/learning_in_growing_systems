@@ -99,5 +99,10 @@ namespace Lineage_utility
         res = new_root_id_str + res;
 
         return res;
-    } // namespace Lineage_utility
+    }
+
+    std::string add_quote(const std::string &str)
+    {
+        return "\"" + str + "\"";
+    }
 } // namespace Lineage_utility

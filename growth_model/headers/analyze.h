@@ -11,6 +11,13 @@
 #include <colormap-shaders/include/colormap/colormap.h>
 #include <boost/format.hpp>
 
+//just utility, do not use outside of this class
+namespace Lineage_utility
+{
+    std::string change_id(const std::string &str, int no_roots);
+    std::string add_quote(const std::string &str);
+} // namespace Lineage_utility
+
 template <typename T>
 class Lineage
 {
@@ -19,6 +26,7 @@ private:
     std::vector<std::vector<T>> m_population; //m_population[i] = cells at time i
     std::map<std::string, T> m_pop_map;       //ID to cell
 public:
+    Lineage() = default;
     Lineage(const std::vector<std::vector<T>> m_population, std::map<std::string, T> pop_map);
     ~Lineage();
     int const endtime() { return m_population.size(); };
@@ -26,7 +34,7 @@ public:
     T const access(int t, int i) { return m_population[t][i]; };
     bool const is_id_exists(std::string id) { return m_pop_map.find(id) != m_pop_map.end(); }
     T const lookup(std::string id) { return m_pop_map[id]; }
-    void push(const Lineage<T> lineage);
+    void push(const Lineage<T>& lineage);
 
     //for retrospective process
     T const parent(const T &cell);
@@ -35,6 +43,7 @@ public:
 
     //for graphics
     void const graphic(std::function<double(T)> func, std::ofstream &out, std::ofstream &out_other_data);
+    void const graphic(std::function<double(T)> func, const double min, const double max, std::ofstream &out, std::ofstream &out_other_data);
     double const max(std::function<double(T)> func);
     double const min(std::function<double(T)> func);
     //coloar plot for  func(cell) over lineage (graphviz)
@@ -64,7 +73,15 @@ T const Lineage<T>::parent(const T &cell)
 {
     std::string id = cell.id();
     assert(id.size() > 1);
+    // compute parent id by eliminating the tail
+    // ex 0S2S12S31 -> 0S2S12S
+    while (id[id.size() - 1] != 'S')
+    {
+        id.pop_back();
+    }
+    //ex 0S2S12S -> 0S2S12
     id.pop_back();
+
     return m_pop_map[id];
 }
 
@@ -117,7 +134,7 @@ double const Lineage<T>::lambda(int max_pop_no)
 }
 
 template <typename T>
-void const Lineage<T>::graphic(std::function<double(T)> func, std::ofstream &out, std::ofstream &out_other_data)
+void const Lineage<T>::graphic(std::function<double(T)> func, const double min_val, const double max_val, std::ofstream &out, std::ofstream &out_other_data)
 {
     out << "digraph lineage { \n";
 
@@ -149,17 +166,17 @@ dir = none
     //nodes
     using namespace colormap;
     MATLAB::Jet jet;
-    double max_val = max(func);
-    double min_val = min(func);
 
     out_other_data << min_val << " " << max_val << std::endl;
+
+    using namespace Lineage_utility; //to use add_quote
 
     for (auto pop_t : m_population)
     {
         for (auto c : pop_t)
         {
             //id
-            out << c.id() << " ";
+            out << add_quote(c.id()) << " "; //to avoid automated split of node by graphvis
             //color
             float normalized_func_val = (func(c) - min_val) / (max_val - min_val);
             Color col = jet.getColor(normalized_func_val);
@@ -176,21 +193,24 @@ dir = none
     }
 
     //edges
-    for (auto pop_t : m_population)
+    for (int gen = 1; gen < m_population.size(); gen++)
     {
-        for (auto c : pop_t)
+        for (auto c : m_population[gen])
         {
-            if (c.id().size() > 1)
-            {
-                T parent_cell = parent(c);
-                out << parent_cell.id() << " -> " << c.id() << std::endl;
-            }
+            T parent_cell = parent(c);
+            out << add_quote(parent_cell.id()) << " -> " << add_quote(c.id()) << std::endl;
         }
     }
 
     //rank
 
     out << "}";
+}
+
+template <typename T>
+void const Lineage<T>::graphic(std::function<double(T)> func, std::ofstream &out, std::ofstream &out_other_data)
+{
+    graphic(func, min(func), max(func), out, out_other_data);
 }
 
 template <typename T>
@@ -217,16 +237,12 @@ double const Lineage<T>::min(std::function<double(T)> func)
     return res;
 }
 
-namespace Lineage_utility
-{
-    std::string change_id(const std::string &str, int no_roots);
-} // namespace Lineage_utility
-
 template <typename T>
-void Lineage<T>::push(const Lineage<T> lineage)
+void Lineage<T>::push(const Lineage<T> &lineage)
 {
-    const int no_roots = m_population[0].size();
+
     const int cureent_lineage_height = m_population.size();
+    const int no_roots = (cureent_lineage_height == 0) ? 0 : m_population[0].size();
 
     for (int gen = 0; gen != lineage.m_population.size(); gen++)
     {

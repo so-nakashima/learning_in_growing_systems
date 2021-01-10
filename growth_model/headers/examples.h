@@ -33,6 +33,7 @@ void test_cells_learn_commom();
 void test_learning_common();
 void compare_common_and_individual_learning();
 void test_lineage_push();
+void test_calc_lambda();
 
 template <typename T>
 void draw_learning_lineage_tree_from_simulation(std::string input_dir_relative_path, std::string output_dir_relative_path, std::function<double(T)> out_func, bool is_full_lineage_used = false)

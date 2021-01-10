@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include "headers/examples.h"
+#include <stdlib.h>
 
 using namespace std;
 
@@ -29,5 +30,13 @@ int main()
    //check_fluctuating_relation_for_common_vs_base();
 
    //test_learning_common();
-   test_lineage_push();
+   //test_lineage_push();
+
+   printf("hote");
+
+   compare_common_and_individual_learning();
+   //test_calc_lambda();
+   system("dot -Tpng .//experiments//sim_2_no_growth_comp//res//common//graph.dat -o .//experiments//sim_2_no_growth_comp//res//common//graph.png");
+   system("dot -Tpng .//experiments//sim_2_no_growth_comp//res//learning/graph.dat -o .//experiments//sim_2_no_growth_comp//res//learning//graph.png");
+   system("dot -Tpng .//experiments//sim_2_no_growth_comp//res//whole/graph.dat -o .//experiments//sim_2_no_growth_comp//res//whole//graph.png");
 }

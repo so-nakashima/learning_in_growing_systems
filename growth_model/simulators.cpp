@@ -203,6 +203,8 @@ std::vector<int> Markov_Environments::generate(const int n)
 
 void Markov_Environments::record()
 {
+    if (out_env == nullptr)
+        return;
     *out_env << std::to_string(current_state()) << std::endl;
 }
 
@@ -538,13 +540,13 @@ Cells_Learn_Common::Cells_Learn_Common(const Cells_Learn &cell) : Cells_Learn(ce
 {
     //select the spine cell
     //exceptional case
-    if (!current_population.empty())
+    if (current_population.empty())
     {
         spine_cell = Cell_Learn();
         return;
     }
 
-    spine_cell = Cell_Learn(current_population[0]);
+    set_spine_cell(Cell_Learn(current_population[0]));
     //set lerning historty to the same one (spine)
     for (auto cell : current_population)
     {
@@ -553,6 +555,12 @@ Cells_Learn_Common::Cells_Learn_Common(const Cells_Learn &cell) : Cells_Learn(ce
         cell.set_ancestral_jump(spine_cell.ancestral_jump);
         cell.set_memory(spine_cell.memory);
     }
+}
+
+void Cells_Learn_Common::set_spine_cell(const Cell_Learn &c)
+{
+    spine_cell = c;
+    spine_cell.set_id("0");
 }
 
 void Cells_Learn_Common::time_evolution(const std::vector<std::vector<double>> &offspring_distribution, const std::vector<std::vector<double>> &next_offspring_distribution)
@@ -577,6 +585,7 @@ void Cells_Learn_Common::time_evolution(const std::vector<std::vector<double>> &
     }
 
     //select spine cell
+    const std::string parent_spine_id = spine_cell.id();
     if (daughters_population.empty())
     {
         spine_cell = Cell_Learn();
@@ -586,6 +595,7 @@ void Cells_Learn_Common::time_evolution(const std::vector<std::vector<double>> &
         int itr = std::discrete_distribution<int>(no_grand_dauthers.begin(), no_grand_dauthers.end())(mt);
         spine_cell = daughters_population[itr];
     }
+    spine_cell.set_id(parent_spine_id + "S0");
 
     //set transition matrix (and other elements) to common one learned by the spine cell
     for (auto &cell : daughters_population)

@@ -5,6 +5,7 @@
 #include "headers/linterp.h"
 #include <iterator>
 #include <algorithm>
+#include <stdlib.h>
 
 void test_env()
 {
@@ -1041,9 +1042,12 @@ void sim_learning(std::string setting_dir_rel_path, std::string output_dir_rel_p
     //initalize population
     std::ifstream in_cells(setting_dir_rel_path + "//initial_cells.dat");
     Cells_Learn *cells;
+    //std::ofstream out_spine(output_dir_rel_path + "//spine.dat"); //only used for common learning
     if (enable_common_learning)
     {
-        cells = new_cells_learn_common_from_read(in_cells);
+        Cells_Learn_Common *cells_temp = new_cells_learn_common_from_read(in_cells);
+        // cells_temp->set_out_spine(&out_spine);
+        cells = cells_temp;
     }
     else
     {
@@ -1066,10 +1070,20 @@ void sim_learning(std::string setting_dir_rel_path, std::string output_dir_rel_p
     std::ofstream out_pop_full(output_dir_rel_path + "//pop_full.dat");
     cells->set_pop_record(&out_pop);
     cells->set_pop_full_record(&out_pop_full);
+    std::ofstream *Pout_spine;
+    if (enable_common_learning)
+    {
+        Pout_spine = new std::ofstream(output_dir_rel_path + "//spine.dat");
+        ((Cells_Learn_Common *)cells)->set_out_spine(Pout_spine);
+    }
 
     w.excecute();
 
     delete cells;
+    if (enable_common_learning)
+    {
+        delete Pout_spine;
+    }
 }
 
 void test_learning_common()
@@ -1103,18 +1117,100 @@ void test_learning_common()
     sim_learning(setting_rel_path, output_rel_path_4_individual, learning_rule, false);
 }
 
+Lineage<Cell_Learn> generate_lineage_learning(std::string setting_dir_rel_path, std::string output_dir_rel_path, std::function<void(int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt)> learning_rule, bool enable_common_learning = false, std::string lineage_file_name = "pop.dat")
+{
+    //execute simulation
+    sim_learning(setting_dir_rel_path, output_dir_rel_path, learning_rule, enable_common_learning);
+
+    //construct lineage
+    std::ifstream in_pop(output_dir_rel_path + "//" + lineage_file_name);
+
+    std::ifstream in_other(setting_dir_rel_path + "//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    const int mem_no = std::stoi(parameters["mem_no"]);
+    const int type_no = std::stoi(parameters["type_no"]);
+
+    return read_learning_lineage(type_no, mem_no, in_pop);
+}
+
+std::vector<double> sim_no_learning_inf(const std::string &setting_dir_rel_path, const std::string &out_dir_rel_path, const std::vector<std::vector<double>> &transition = {}) //can change transition matrix by the last arg; return cells.lambdas
+{
+    //initialize world setting
+    std::ifstream in_other(setting_dir_rel_path + "//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    MBPRE w;
+    w.set_end_time(std::stoi(parameters["end_time"]));
+
+    std::ifstream in_env(setting_dir_rel_path + "//env.dat");
+    Markov_Environments env = read_env(in_env);
+
+    //cell setting
+    std::ifstream in_cells(setting_dir_rel_path + "//initial_cells.dat");
+    std::ifstream in_cell_tran(".//experiments//sim_3//cell_type_tran.dat");
+    Cells_Infinite cells(read_cells_inifinite(in_cells, in_cell_tran));
+    if (transition.size() != 0)
+    {
+        cells.set_type_transition(transition);
+    }
+
+    //replication
+    std::vector<std::vector<std::vector<double>>> replication;
+    std::ifstream in_repl(setting_dir_rel_path + "//replication.dat");
+    read3DTensor<double>(replication, in_repl);
+    w.set_offspring_distributions(replication);
+
+    //record
+    std::ofstream out_pop(out_dir_rel_path + " //pop.dat");
+    cells.set_output(&out_pop);
+
+    w.set_environments(&env);
+    w.set_population(&cells);
+    w.excecute();
+
+    return cells.lambdas;
+}
+
+double calc_lambda(const Cell_Learn &cell, const std::string &setting_dir_rel_path, const std::string &out_dir_rel_path)
+{
+    //execute simulation and acquire lambdas
+    std::vector<double> lambdas = sim_no_learning_inf(setting_dir_rel_path, out_dir_rel_path, cell.transition);
+
+    double res = 0.0;
+    for (auto l : lambdas)
+    {
+        res += l;
+    }
+    return res / lambdas.size();
+}
+
 void compare_common_and_individual_learning()
 {
-    //set directories
+    printf("test");
+    //set directories (modify if necessary)
+    //for generating lineage
     const std::string setting_rel_path = ".//experiments//sim_2_no_growth_comp";
     const std::string output_rel_path_4_common = ".//experiments//sim_2_no_growth_comp//res//common";
     const std::string output_rel_path_4_individual = ".//experiments//sim_2_no_growth_comp//res//learning";
 
-    //read paramers and define const variables
+    //for calculating lambda (in order to pass lienage.graphic)
+    const std::string setting_calc_lambda_dir_rel_path = ".//experiments//sim_2_no_growth_comp//calc_lambdas";
+    const std::string out_calc_lambda_dir_rel_path = ".//experiments//sim_2_no_growth_comp//calc_lambdas//res";
+
+    //for drawing graph
+    std::ofstream out_ind_learning_lineage(".//experiments//sim_2_no_growth_comp//res//learning//graph.dat");
+    std::ofstream out_common_learning(".//experiments//sim_2_no_growth_comp//res//common//graph.dat");
+    std::ofstream out_whole_lieneage(".//experiments//sim_2_no_growth_comp//res//whole//graph.dat");
+
+    //not necessary, just complete arg. of lienage.grphic
+    std::ofstream out_ind_learning_lineage_max_min(".//experiments//sim_2_no_growth_comp//res//learning//max_min.dat");
+    std::ofstream out_common_learning_max_min(".//experiments//sim_2_no_growth_comp//res//common//max_min.dat");
+    std::ofstream out_whole_max_min(".//experiments//sim_2_no_growth_comp//res//whole//max_min.dat");
+
+    //read paramers to define const variables
     std::ifstream in_other(setting_rel_path + "//other.dat");
     std::map<std::string, std::string> parameters = read_parameters(in_other);
 
-    //online EM
+    //set learning rule to online EM
     const int type_no = std::stoi(parameters["type_no"]);
     const double learning_rate = std::stod(parameters["learning_rate"]);
 
@@ -1132,14 +1228,35 @@ void compare_common_and_individual_learning()
         tran = jump_hist;
     };
 
-    //execute simulation
-    sim_learning(setting_rel_path, output_rel_path_4_common, learning_rule, true);
-    sim_learning(setting_rel_path, output_rel_path_4_individual, learning_rule, false);
+    //execute simulation and get lineage
+    Lineage<Cell_Learn> lineage_ind = generate_lineage_learning(setting_rel_path, output_rel_path_4_individual, learning_rule, /* enable_common_learning */ false);
 
-    //draw graphs
-    //construct lineage
-    const int endtime = std::stoi(parameters["end_time"]);
-    const int mem_no = std::stoi(parameters["mem_no"]);
+    //collect the same number of spines as max_pop_no (= 40)
+    Lineage<Cell_Learn> lineage_common;
+    const int max_cell_no = std::stoi(parameters["max_cell_no"]);
+    for (int i = 0; i != max_cell_no; i++)
+    {
+        Lineage<Cell_Learn> spine_lin = generate_lineage_learning(setting_rel_path, output_rel_path_4_common, learning_rule, /* enable_common_learning */ true, /*lineage_file_name*/ "spine.dat");
+        lineage_common.push(spine_lin);
+    }
+
+    //whole lineage
+    Lineage<Cell_Learn> lineage_whole;
+    lineage_whole.push(lineage_common);
+    lineage_whole.push(lineage_ind);
+
+    //pass for lineage.graphic to calculate lambda of each cell
+    auto cell2lambda = [&](const Cell_Learn &cell) {
+        return calc_lambda(cell, setting_calc_lambda_dir_rel_path, out_calc_lambda_dir_rel_path);
+    };
+
+    //determine the range of plot
+    double max_val = std::max(lineage_ind.max(cell2lambda), lineage_common.max(cell2lambda));
+    double min_val = std::min(lineage_ind.min(cell2lambda), lineage_common.min(cell2lambda));
+
+    lineage_ind.graphic(cell2lambda, min_val, max_val, out_ind_learning_lineage, out_ind_learning_lineage_max_min);
+    lineage_common.graphic(cell2lambda, min_val, max_val, out_common_learning, out_common_learning_max_min);
+    lineage_whole.graphic(cell2lambda, out_whole_lieneage, out_whole_max_min);
 }
 
 void test_lineage_push()
@@ -1162,4 +1279,34 @@ void test_lineage_push()
     lineage.push(lineage);
 
     lineage.push(lineage);
+}
+
+void test_calc_lambda()
+{
+    //directories
+    const std::string setting_calc_lambda_dir_rel_path = ".//experiments//sim_2_no_growth_comp//calc_lambdas";
+    const std::string out_calc_lambda_dir_rel_path = ".//experiments//sim_2_no_growth_comp//calc_lambdas//res";
+    //lineage location and parameters
+    const std::string setting_dir_rel_path = ".//experiments//sim_2_no_growth_comp";
+    const std::string output_dir_rel_path = ".//experiments//sim_2_no_growth_comp//res//learning";
+    //for drawing graph
+    std::ofstream out_ind_learning_lineage(".//experiments//sim_2_no_growth_comp//res//learning//graph.dat");
+    std::ofstream out_ind_learning_lineage_max_min(".//experiments//sim_2_no_growth_comp//res//learning//max_min.dat");
+
+    //pass for lineage.graphic to calculate lambda of each cell
+    auto cell2lambda = [&](const Cell_Learn &cell) {
+        return calc_lambda(cell, setting_calc_lambda_dir_rel_path, out_calc_lambda_dir_rel_path);
+    };
+
+    //construct lineage
+    std::ifstream in_pop(output_dir_rel_path + "//pop.dat");
+
+    std::ifstream in_other(setting_dir_rel_path + "//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+    const int mem_no = std::stoi(parameters["mem_no"]);
+    const int type_no = std::stoi(parameters["type_no"]);
+
+    Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, mem_no, in_pop);
+
+    lineage.graphic(cell2lambda, out_ind_learning_lineage, out_ind_learning_lineage_max_min);
 }
