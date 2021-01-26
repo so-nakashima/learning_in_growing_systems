@@ -264,7 +264,7 @@ public:
     int size() const override { return current_population.size(); }
 };
 
-class Cells_Learn_Common : public Cells_Learn
+class Cells_Learn_Common : public Cells_Learn //TODO: separate this class into cell_learn_common(just 1 cell) and cell_learn_spine (active common learning)
 {
 private:
     Cell_Learn spine_cell;

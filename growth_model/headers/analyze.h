@@ -34,7 +34,7 @@ public:
     T const access(int t, int i) { return m_population[t][i]; };
     bool const is_id_exists(std::string id) { return m_pop_map.find(id) != m_pop_map.end(); }
     T const lookup(std::string id) { return m_pop_map[id]; }
-    void push(const Lineage<T>& lineage);
+    void push(const Lineage<T> &lineage);
 
     //for retrospective process
     T const parent(const T &cell);
@@ -204,7 +204,7 @@ dir = none
 
     //rank
 
-    out << "}";
+    out << "}" << std::flush;
 }
 
 template <typename T>

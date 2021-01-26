@@ -555,6 +555,7 @@ Cells_Learn_Common::Cells_Learn_Common(const Cells_Learn &cell) : Cells_Learn(ce
         cell.set_ancestral_jump(spine_cell.ancestral_jump);
         cell.set_memory(spine_cell.memory);
     }
+    set_maximum_population_size(1); //only see spine
 }
 
 void Cells_Learn_Common::set_spine_cell(const Cell_Learn &c)
@@ -592,7 +593,11 @@ void Cells_Learn_Common::time_evolution(const std::vector<std::vector<double>> &
     }
     else
     {
-        int itr = std::discrete_distribution<int>(no_grand_dauthers.begin(), no_grand_dauthers.end())(mt);
+        //const int itr = std::discrete_distribution<int>(no_grand_dauthers.begin(), no_grand_dauthers.end())(mt);
+
+        std::vector<double> all1vec(daughters_population.size(), 1.0);
+        const int itr = std::discrete_distribution<int>(all1vec.begin(), all1vec.end())(mt);
+
         spine_cell = daughters_population[itr];
     }
     spine_cell.set_id(parent_spine_id + "S0");
