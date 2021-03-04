@@ -1208,7 +1208,7 @@ void compare_common_and_individual_learning()
     //for drawing graph
     std::ofstream out_ind_learning_lineage(".//experiments//sim_2_no_growth_comp//res//learning//graph.dat");
     std::ofstream out_common_learning(".//experiments//sim_2_no_growth_comp//res//common//graph.dat");
-    std::ofstream out_whole_lieneage(".//experiments//sim_2_no_growth_comp//res//whole//graph.dat");
+    std::ofstream out_whole_lineage(".//experiments//sim_2_no_growth_comp//res//whole//graph.dat");
 
     //not necessary, just complete arg. of lienage.grphic
     std::ofstream out_ind_learning_lineage_max_min(".//experiments//sim_2_no_growth_comp//res//learning//max_min.dat");
@@ -1265,7 +1265,7 @@ void compare_common_and_individual_learning()
 
     lineage_ind.graphic(cell2lambda, min_val, max_val, out_ind_learning_lineage, out_ind_learning_lineage_max_min);
     lineage_common.graphic(cell2lambda, min_val, max_val, out_common_learning, out_common_learning_max_min);
-    lineage_whole.graphic(cell2lambda, out_whole_lieneage, out_whole_max_min);
+    lineage_whole.graphic(cell2lambda, out_whole_lineage, out_whole_max_min);
 
     execute_graphviz(".//experiments//sim_2_no_growth_comp//res//learning//graph.dat", ".//experiments//sim_2_no_growth_comp//res//learning//graph.png");
     execute_graphviz(".//experiments//sim_2_no_growth_comp//res//common//graph.dat", ".//experiments//sim_2_no_growth_comp//res//common//graph.png");
@@ -1396,7 +1396,7 @@ void compare_common_and_individual_learning_iid()
     //for drawing graph
     std::ofstream out_ind_learning_lineage(".//experiments//sim_4_no_growth_learning_artificial//res//learning//graph.dat");
     std::ofstream out_common_learning(".//experiments//sim_4_no_growth_learning_artificial//res//common//graph.dat");
-    std::ofstream out_whole_lieneage(".//experiments//sim_4_no_growth_learning_artificial//res//whole//graph.dat");
+    std::ofstream out_whole_lineage(".//experiments//sim_4_no_growth_learning_artificial//res//whole//graph.dat");
 
     //not necessary, just complete arg. of lienage.grphic
     std::ofstream out_ind_learning_lineage_max_min(".//experiments//sim_4_no_growth_learning_artificial//res//learning//max_min.dat");
@@ -1505,7 +1505,7 @@ void compare_common_and_individual_learning_iid()
 
     lineage_ind.graphic(cell2lambda, min_val, max_val, out_ind_learning_lineage, out_ind_learning_lineage_max_min);
     lineage_common.graphic(cell2lambda, min_val, max_val, out_common_learning, out_common_learning_max_min);
-    lineage_whole.graphic(cell2lambda, out_whole_lieneage, out_whole_max_min);
+    lineage_whole.graphic(cell2lambda, out_whole_lineage, out_whole_max_min);
 
     execute_graphviz(".//experiments//sim_4_no_growth_learning_artificial//res//learning//graph.dat", ".//experiments//sim_4_no_growth_learning_artificial//res//learning//graph.png");
     execute_graphviz(".//experiments//sim_4_no_growth_learning_artificial//res//common//graph.dat", ".//experiments//sim_4_no_growth_learning_artificial//res//common//graph.png");
@@ -1516,24 +1516,31 @@ void sim5_random_search_and_growth()
 {
     //set directories (modify if necessary)
     //for generating lineage
-    const std::string setting_rel_path = ".//experiments//sim_4_no_growth_learning_artificial";
-    const std::string setting_common_rel_path = ".//experiments//sim_4_no_growth_learning_artificial//setting_common";
-    const std::string output_rel_path_4_common = ".//experiments//sim_4_no_growth_learning_artificial//res//common";
-    const std::string output_rel_path_4_individual = ".//experiments//sim_4_no_growth_learning_artificial//res//learning";
+    const std::string setting_rel_path = ".//experiments//sim_5_random_search_and_growth";
+    const std::string setting_common_rel_path = ".//experiments//sim_5_random_search_and_growth//setting_common";
+    const std::string output_rel_path_4_random = ".//experiments//sim_5_random_search_and_growth//res//random";
+    const std::string output_rel_path_4_adaptive = ".//experiments//sim_5_random_search_and_growth//res//adaptive";
+    const std::string output_rel_path_4_learning = ".//experiments//sim_5_random_search_and_growth//res//learning";
+    const std::string output_rel_path_4_whole = ".//experiments//sim_5_random_search_and_growth//res//whole";
+    const std::string output_rel_path_4_random_plus_adaptive = ".//experiments//sim_5_random_search_and_growth//res//random_adaptive";
 
     //for calculating lambda (in order to pass lienage.graphic)
-    const std::string setting_calc_lambda_dir_rel_path = ".//experiments//sim_4_no_growth_learning_artificial//calc_lambdas";
-    const std::string out_calc_lambda_dir_rel_path = ".//experiments//sim_4_no_growth_learning_artificial//calc_lambdas//res";
+    const std::string setting_calc_lambda_dir_rel_path = ".//experiments//sim_5_random_search_and_growth//calc_lambdas";
+    const std::string out_calc_lambda_dir_rel_path = ".//experiments//sim_5_random_search_and_growth//calc_lambdas//res";
 
     //for drawing graph
-    std::ofstream out_ind_learning_lineage(".//experiments//sim_4_no_growth_learning_artificial//res//learning//graph.dat");
-    std::ofstream out_common_learning(".//experiments//sim_4_no_growth_learning_artificial//res//common//graph.dat");
-    std::ofstream out_whole_lieneage(".//experiments//sim_4_no_growth_learning_artificial//res//whole//graph.dat");
+    std::ofstream out_random_lineage(output_rel_path_4_random + "//graph.dat");
+    std::ofstream out_adaptive_learning(output_rel_path_4_adaptive + "//graph.dat");
+    std::ofstream out_learning_lineage(output_rel_path_4_learning + "//graph.dat");
+    std::ofstream out_whole_lineage(output_rel_path_4_whole + "//graph.dat");
+    std::ofstream out_random_plus_adaptive_lineage(output_rel_path_4_random_plus_adaptive + "//graph.dat");
 
     //not necessary, just complete arg. of lienage.grphic
-    std::ofstream out_ind_learning_lineage_max_min(".//experiments//sim_4_no_growth_learning_artificial//res//learning//max_min.dat");
-    std::ofstream out_common_learning_max_min(".//experiments//sim_4_no_growth_learning_artificial//res//common//max_min.dat");
-    std::ofstream out_whole_max_min(".//experiments//sim_4_no_growth_learning_artificial//res//whole//max_min.dat");
+    std::ofstream out_random_lineage_min_max(output_rel_path_4_random + "//min-max.dat");
+    std::ofstream out_adaptive_learning_min_max(output_rel_path_4_adaptive + "//min-max.dat");
+    std::ofstream out_learning_lineage_min_max(output_rel_path_4_learning + "//min-max.dat");
+    std::ofstream out_whole_lineage_min_max(output_rel_path_4_whole + "//min-max.dat");
+    std::ofstream out_random_plus_adaptive_lineage_min_max(output_rel_path_4_random_plus_adaptive + "//min-max.dat");
 
     //read paramers to define const variables
     std::ifstream in_other(setting_rel_path + "//other.dat");
@@ -1544,35 +1551,35 @@ void sim5_random_search_and_growth()
     const double learning_rate = std::stod(parameters["learning_rate"]);
     const double noise_intensity = std::stod(parameters["noise_intensity"]);
 
-    // auto learning_rule = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
-    //     //update ancestral jump
-    //     for (int i = 0; i != type_no; i++)
-    //     {
-    //         for (int j = 0; j != type_no; j++)
-    //         {
-    //             jump_hist[i][j] = (1 - learning_rate) * jump_hist[i][j] + learning_rate * ((i == p_type && j == d_type) ? 1.0 : 0.0);
-    //         }
-    //     }
+    auto ancestral_learning = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
+        //update ancestral jump
+        jump_hist[p_type][d_type] += learning_rate;
 
-    //     std::vector<double> pi(type_no, 0.0); //ancestral type_distribution at one-point
-    //     for (int i = 0; i != type_no; i++)
-    //     {
-    //         for (int j = 0; j != type_no; j++)
-    //         {
-    //             pi[i] += jump_hist[i][j];
-    //         }
-    //     }
+        //iid strategy
+        double sum = 0.0;
+        std::vector<double> pi(type_no, 0.0);
+        for (int i = 0; i != type_no; i++)
+        {
+            for (int j = 0; j != type_no; j++)
+            {
+                pi[i] += jump_hist[j][i];
+            }
+            sum += pi[i];
+        }
 
-    //     for (int i = 0; i != type_no; i++)
-    //     {
-    //         for (int j = 0; j != type_no; j++)
-    //         {
-    //             tran[i][j] = pi[j];
-    //         }
-    //     }
-    // };
+        for (int i = 0; i != type_no; i++)
+        {
+            for (int j = 0; j != type_no; j++)
+            {
+                jump_hist[i][j] /= sum;
+                tran[i][j] = pi[j] / sum;
+            }
+        }
+    };
 
-    auto learning_rule = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
+    auto random_search = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
+        double sum = 0.0;
+
         //iid strategy
         std::vector<double> pi(type_no, 0.0);
         for (int i = 0; i != type_no; i++)
@@ -1581,17 +1588,51 @@ void sim5_random_search_and_growth()
             {
                 pi[i] += jump_hist[i][j];
             }
-        }
-
-        //gradient and normalize
-        double sum = 0.0;
-        for (int i = 0; i != type_no; i++)
-        {
-            double noise = std::normal_distribution<double>(1.0, noise_intensity)(mt);
-            pi[i] = std::max(0.0001,
-                             (learning_rate * (i + 1) * noise + (1 - learning_rate)) * pi[i]);
             sum += pi[i];
         }
+
+        //increase a selected component
+        std::vector<double> unit(type_no, 1.0);
+        std::discrete_distribution<int> dist(unit.begin(), unit.end());
+        int selected = dist(mt);
+        pi[selected] += noise_intensity;
+        sum += noise_intensity;
+
+        //normalize
+        for (int i = 0; i != type_no; i++)
+        {
+            pi[i] /= sum;
+        }
+
+        for (int i = 0; i != type_no; i++)
+        {
+            for (int j = 0; j != type_no; j++)
+            {
+                jump_hist[i][j] = pi[i];
+                tran[i][j] = pi[j];
+            }
+        }
+    };
+
+    auto adaptive_random_search = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
+        double sum = 0.0;
+
+        //iid strategy
+        std::vector<double> pi(type_no, 0.0);
+        for (int i = 0; i != type_no; i++)
+        {
+            for (int j = 0; j != type_no; j++)
+            {
+                pi[i] += jump_hist[i][j];
+            }
+            sum += pi[i];
+        }
+
+        //increase a selected component
+        std::discrete_distribution<int> dist(pi.begin(), pi.end());
+        int selected = dist(mt);
+        pi[selected] += noise_intensity;
+        sum += noise_intensity;
 
         //normalize
         for (int i = 0; i != type_no; i++)
@@ -1610,21 +1651,33 @@ void sim5_random_search_and_growth()
     };
 
     //execute simulation and get lineage
-    Lineage<Cell_Learn> lineage_ind = generate_lineage_learning(setting_rel_path, output_rel_path_4_individual, learning_rule, /* enable_common_learning */ false);
+    Lineage<Cell_Learn> lineage_learning = generate_lineage_learning(setting_rel_path, output_rel_path_4_learning, ancestral_learning, /* enable_common_learning */ false);
 
     //collect the same number of spines as max_pop_no (= 40)
-    Lineage<Cell_Learn> lineage_common;
-    const int max_cell_no = std::stoi(parameters["max_cell_no"]);
-    for (int i = 0; i != max_cell_no; i++)
-    {
-        Lineage<Cell_Learn> spine_lin = generate_lineage_learning(setting_common_rel_path, output_rel_path_4_common, learning_rule, /* enable_common_learning */ true, /*lineage_file_name*/ "spine.dat");
-        lineage_common.push(spine_lin);
-    }
+    // Lineage<Cell_Learn> lineage_random_search;
+    // const int max_cell_no = std::stoi(parameters["max_cell_no"]);
+    // for (int i = 0; i != max_cell_no; i++)
+    // {
+    //     Lineage<Cell_Learn> spine_lin = generate_lineage_learning(setting_common_rel_path, output_rel_path_4_random, random_search, /* enable_common_learning */ true, /*lineage_file_name*/ "spine.dat");
+    //     lineage_random_search.push(spine_lin);
+    // }
+
+    // Lineage<Cell_Learn> lineage_adaptive_random_search;
+    // for (int i = 0; i != max_cell_no; i++)
+    // {
+    //     Lineage<Cell_Learn> spine_lin = generate_lineage_learning(setting_common_rel_path, output_rel_path_4_adaptive, adaptive_random_search, /* enable_common_learning */ true, /*lineage_file_name*/ "spine.dat");
+    //     lineage_adaptive_random_search.push(spine_lin);
+    // }
+    Lineage<Cell_Learn> lineage_random_search = generate_lineage_learning(setting_rel_path, output_rel_path_4_random, random_search, /* enable_common_learning */ false);
+    Lineage<Cell_Learn> lineage_adaptive_random_search = generate_lineage_learning(setting_rel_path, output_rel_path_4_adaptive, adaptive_random_search, /* enable_common_learning */ false);
 
     //whole lineage
     Lineage<Cell_Learn> lineage_whole;
-    lineage_whole.push(lineage_common);
-    lineage_whole.push(lineage_ind);
+    Lineage<Cell_Learn> lineage_random_plus_adaptive;
+    lineage_random_plus_adaptive.push(lineage_random_search);
+    lineage_random_plus_adaptive.push(lineage_adaptive_random_search);
+    lineage_whole.push(lineage_random_plus_adaptive);
+    lineage_whole.push(lineage_learning);
 
     //pass for lineage.graphic to calculate lambda of each cell
     auto cell2lambda = [&](const Cell_Learn &cell) {
@@ -1632,14 +1685,165 @@ void sim5_random_search_and_growth()
     };
 
     //determine the range of plot
-    double max_val = std::max(lineage_ind.max(cell2lambda), lineage_common.max(cell2lambda));
-    double min_val = std::min(lineage_ind.min(cell2lambda), lineage_common.min(cell2lambda));
+    const double max_val = std::max({lineage_learning.max(cell2lambda), lineage_random_search.max(cell2lambda), lineage_adaptive_random_search.max(cell2lambda)});
+    const double min_val = std::min({lineage_learning.min(cell2lambda), lineage_random_search.min(cell2lambda), lineage_adaptive_random_search.min(cell2lambda)});
 
-    lineage_ind.graphic(cell2lambda, min_val, max_val, out_ind_learning_lineage, out_ind_learning_lineage_max_min);
-    lineage_common.graphic(cell2lambda, min_val, max_val, out_common_learning, out_common_learning_max_min);
-    lineage_whole.graphic(cell2lambda, out_whole_lieneage, out_whole_max_min);
+    lineage_learning.graphic(cell2lambda, min_val, max_val, out_learning_lineage, out_learning_lineage_min_max);
+    lineage_random_search.graphic(cell2lambda, min_val, max_val, out_random_lineage, out_random_lineage_min_max);
+    lineage_adaptive_random_search.graphic(cell2lambda, min_val, max_val, out_adaptive_learning, out_adaptive_learning_min_max);
+    lineage_whole.graphic(cell2lambda, min_val, max_val, out_whole_lineage, out_whole_lineage_min_max);
+    lineage_random_plus_adaptive.graphic(cell2lambda, out_random_plus_adaptive_lineage, out_random_plus_adaptive_lineage_min_max);
 
-    execute_graphviz(".//experiments//sim_4_no_growth_learning_artificial//res//learning//graph.dat", ".//experiments//sim_4_no_growth_learning_artificial//res//learning//graph.png");
-    execute_graphviz(".//experiments//sim_4_no_growth_learning_artificial//res//common//graph.dat", ".//experiments//sim_4_no_growth_learning_artificial//res//common//graph.png");
-    execute_graphviz(".//experiments//sim_4_no_growth_learning_artificial//res//whole//graph.dat", ".//experiments//sim_4_no_growth_learning_artificial//res//whole//graph.png");
+    //png
+    execute_graphviz(".//experiments//sim_5_random_search_and_growth//res//learning//graph.dat", ".//experiments//sim_5_random_search_and_growth//res//learning//graph.png");
+    execute_graphviz(".//experiments//sim_5_random_search_and_growth//res//random//graph.dat", ".//experiments//sim_5_random_search_and_growth//res//random//graph.png");
+    execute_graphviz(".//experiments//sim_5_random_search_and_growth//res//adaptive//graph.dat", ".//experiments//sim_5_random_search_and_growth//res//adaptive//graph.png");
+    execute_graphviz(".//experiments//sim_5_random_search_and_growth//res//whole//graph.dat", ".//experiments//sim_5_random_search_and_growth//res//whole//graph.png");
+    execute_graphviz(output_rel_path_4_random_plus_adaptive + "//graph.dat", output_rel_path_4_random_plus_adaptive + "//graph.png");
+
+    //pdf
+    execute_graphviz(".//experiments//sim_5_random_search_and_growth//res//learning//graph.dat", ".//experiments//sim_5_random_search_and_growth//res//learning//graph.pdf", "pdf");
+    execute_graphviz(".//experiments//sim_5_random_search_and_growth//res//random//graph.dat", ".//experiments//sim_5_random_search_and_growth//res//random//graph.pdf", "pdf");
+    execute_graphviz(".//experiments//sim_5_random_search_and_growth//res//adaptive//graph.dat", ".//experiments//sim_5_random_search_and_growth//res//adaptive//graph.pdf", "pdf");
+    execute_graphviz(".//experiments//sim_5_random_search_and_growth//res//whole//graph.dat", ".//experiments//sim_5_random_search_and_growth//res//whole//graph.pdf", "pdf");
+    execute_graphviz(output_rel_path_4_random_plus_adaptive + "//graph.dat", output_rel_path_4_random_plus_adaptive + "//graph.pdf", "pdf");
+}
+
+double ff_thm_expected_gain(const Cell_Learn &cell, const std::vector<double> &Q_env, const std::vector<std::vector<double>> &mean_replication, double learning_rate)
+{
+    int type_no = cell.transition.size();
+    int env_no = Q_env.size();
+
+    //check the dimension of mean_replication is valid
+    assert(mean_replication.size() == env_no);
+    for (int i = 0; i != env_no; i++)
+    {
+        assert(mean_replication[i].size() == type_no);
+    }
+
+    //construct iid vector
+
+    //calculate expected gain by definition
+    double res = 0.0;
+    for (int e = 0; e != env_no; e++)
+    {
+        for (int ef = 0; ef != env_no; ef++)
+        {
+
+            double first_moment = 0.0;
+            double second_moment = 0.0;
+            for (int i = 0; i != type_no; i++)
+            {
+                first_moment += mean_replication[e][i];
+                second_moment += mean_replication[e][i] * mean_replication[ef][i];
+            }
+            res += (log(second_moment) - 2 * log(first_moment)) * Q_env[e] * Q_env[ef];
+        }
+    }
+
+    return res * learning_rate;
+}
+
+void check_ff_thm_from_lineage(Lineage<Cell_Learn> &lineage, std::function<double(Cell_Learn)> calc_lambda, std::function<double(Cell_Learn)> calc_expected_gain, std::ofstream &out)
+//cell.memory[0] = 0 if no learning occurs and > 0 otherwise
+{
+    //store fitness gain of the cells in lienage
+    std::vector<double> expected_gains;
+    std::vector<double> actual_gains;
+
+    const size_t end_time = lineage.endtime();
+    for (int t = 0; t != end_time; t++)
+    {
+        for (int i = 0; i != lineage.pop_size(t); i++)
+        {
+            Cell_Learn cell = lineage.access(t, i);
+            assert(cell.memory.size() > 0);
+            if (cell.memory[0] < 0.01) //no learning, 0.01 is machine epsilon
+                continue;
+
+            Cell_Learn parent = lineage.parent(cell);
+
+            double lambda_cell = calc_lambda(cell);
+            double lambda_parent = calc_lambda(parent);
+            double actual_gain = lambda_cell - lambda_parent;
+            actual_gains.push_back(lambda_cell - lambda_parent);
+
+            double expected_gain = calc_expected_gain(parent);
+            expected_gains.push_back(expected_gain);
+
+            //output
+            out << actual_gain << " " << expected_gain << std::endl;
+        }
+    }
+
+    //drawing, to be implemented if necesarry
+}
+
+void check_ff_thm_from_path(const std::string &setting_rel_path, const std::string &output_rel_path, const std::string &setting_for_calc_lambda_rel_path, const std::string &output_for_calc_lambda_rel_path)
+{
+
+    //read paramers to define const variables
+    std::ifstream in_other(setting_rel_path + "//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+
+    //set learning rule to online EM
+    const int type_no = std::stoi(parameters["type_no"]);
+    const double learning_rate = std::stod(parameters["learning_rate"]);
+    const int time_estimate_retro = std::stoi(parameters["time_estimate_retro"]);
+
+    //learning rule, to be updated
+    auto ancestral_learning = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
+        //update ancestral jump
+        jump_hist[p_type][d_type] += learning_rate;
+
+        //iid strategy
+        double sum = 0.0;
+        std::vector<double> pi(type_no, 0.0);
+        for (int i = 0; i != type_no; i++)
+        {
+            for (int j = 0; j != type_no; j++)
+            {
+                pi[i] += jump_hist[j][i];
+            }
+            sum += pi[i];
+        }
+
+        for (int i = 0; i != type_no; i++)
+        {
+            for (int j = 0; j != type_no; j++)
+            {
+                jump_hist[i][j] /= sum;
+                tran[i][j] = pi[j] / sum;
+            }
+        }
+    };
+
+    //execute simulation and get lineage
+    Lineage<Cell_Learn> lineage = generate_lineage_learning(setting_rel_path, output_rel_path, ancestral_learning, /* enable_common_learning */ false);
+
+    //pass for check_ff_thm_from_lineage to calculate ***actual*** fitness gain of each cell
+    auto cell2lambda = [&](const Cell_Learn &cell) {
+        return calc_lambda(cell, setting_calc_lambda_dir_rel_path, out_calc_lambda_dir_rel_path);
+    };
+
+    //pass for check_ff_thm_from_lineage to calculate ***expected*** fitness gain of each cell
+    //first read parameters
+    std::ifstream in_env(setting_dir_rel_path + "//env.dat");
+    Markov_Environments env = read_env(in_env);
+
+    //replication
+    std::vector<std::vector<std::vector<double>>> replication;
+    std::ifstream in_repl(setting_dir_rel_path + "//replication.dat");
+    read3DTensor<double>(replication, in_repl);
+    w.set_offspring_distributions(replication);
+
+    auto cell2expected = [&](const Cell_Learn &cell) {
+        return ff_thm_expected_gain(cell, , , )
+    } //check ff-thm
+    std::ofstream out_ff_thm(output_rel_path + "//ff_thm.dat");
+    check_ff_thm_from_lineage(lineage, cell2lambda, , out_ff_thm);
+}
+
+void sim_6_check_ff_thm()
+{
 }
