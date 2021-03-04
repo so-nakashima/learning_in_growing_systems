@@ -29,15 +29,15 @@ public:
     Lineage() = default;
     Lineage(const std::vector<std::vector<T>> m_population, std::map<std::string, T> pop_map);
     ~Lineage();
-    int const endtime() { return m_population.size(); };
-    size_t const pop_size(const int i) { return m_population[i].size(); };
-    T const access(int t, int i) { return m_population[t][i]; };
+    int endtime() const { return m_population.size(); };
+    size_t pop_size(const int i) { return m_population[i].size(); };
+    T access(int t, int i) const { return m_population[t][i]; };
     bool const is_id_exists(std::string id) { return m_pop_map.find(id) != m_pop_map.end(); }
     T const lookup(std::string id) { return m_pop_map[id]; }
     void push(const Lineage<T> &lineage);
 
     //for retrospective process
-    T const parent(const T &cell);
+    T parent(const T &cell);
     std::vector<double> const backward_mean(std::vector<std::function<double(T, T, int)>> funcs, int max_no = std::numeric_limits<int>::max()); //calculate backward mean for all f \in funcs. [0...max_no-1]cell is used at the last time// arguments of func are (parent, current , generation) generation is that of cell (0-origin)
     double const backward_mean(std::function<double(T, T, int)> func, int max_no = std::numeric_limits<int>::max());
 
@@ -69,7 +69,7 @@ Lineage<T>::~Lineage()
 }
 
 template <typename T>
-T const Lineage<T>::parent(const T &cell)
+T Lineage<T>::parent(const T &cell)
 {
     std::string id = cell.id();
     assert(id.size() > 1);
@@ -150,7 +150,9 @@ layout = dot
 shape = circle,
 label = "",
 style = filled,
-color = white
+color = white,
+width = 1.3,
+height = 1.3
 ]
 )";
     out << node_property;

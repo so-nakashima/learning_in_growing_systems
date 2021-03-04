@@ -32,12 +32,10 @@ int main()
    //test_learning_common();
    //test_lineage_push();
 
-   compare_common_and_individual_learning();
+   //compare_common_and_individual_learning();
    //test_calc_lambda();
    //no_spine_learning();
-   //system("dot -Tpng .//experiments//sim_2_no_growth_comp//res//common//graph.dat -o .//experiments//sim_2_no_growth_comp//res//common//graph.png");
-   // system("dot -Tpng .//experiments//sim_2_no_growth_comp//res//learning/graph.dat -o .//experiments//sim_2_no_growth_comp//res//learning//graph.png");
-   // system("dot -Tpng .//experiments//sim_2_no_growth_comp//res//whole/graph.dat -o .//experiments//sim_2_no_growth_comp//res//whole//graph.png");
-
    //compare_common_and_individual_learning_iid();
+
+   sim5_random_search_and_growth();
 }
