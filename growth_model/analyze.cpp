@@ -35,7 +35,7 @@ Lineage<Cell> read_lineage(std::ifstream &in)
     return Lineage<Cell>(pop, pop_map);
 }
 
-Lineage<Cell_Learn> read_learning_lineage(int type_no, int memory_no, std::ifstream &in)
+Lineage<Cell_Learn> read_learning_lineage(int type_no, std::ifstream &in)
 {
     std::string id;
     int type;
@@ -55,6 +55,8 @@ Lineage<Cell_Learn> read_learning_lineage(int type_no, int memory_no, std::ifstr
         readMat(type_no, type_no, ancestral_jump, in);
         readMat(type_no, type_no, transition, in);
         //readVec(type_no, replication_history, in);
+        int memory_no;
+        in >> memory_no;
         readVec(memory_no, mem, in);
 
         Cell_Learn c(type, id, ancestral_jump, transition, replication_history, mem);

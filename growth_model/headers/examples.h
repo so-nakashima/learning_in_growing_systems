@@ -37,6 +37,7 @@ void test_calc_lambda();
 void no_spine_learning();
 void compare_common_and_individual_learning_iid();
 void sim5_random_search_and_growth();
+void sim_6_check_ff_thm();
 
 template <typename T>
 void draw_learning_lineage_tree_from_simulation(std::string input_dir_relative_path, std::string output_dir_relative_path, std::function<double(T)> out_func, bool is_full_lineage_used = false)
@@ -53,8 +54,8 @@ void draw_learning_lineage_tree_from_simulation(std::string input_dir_relative_p
 
     std::ifstream in_pop(input_dir_relative_path + "//res//pop.dat");
     std::ifstream in_pop_full(input_dir_relative_path + "//res//pop_full.dat");
-    Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, mem_no, in_pop);
-    Lineage<Cell_Learn> lineage_full = read_learning_lineage(type_no, mem_no, in_pop_full);
+    Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, in_pop);
+    Lineage<Cell_Learn> lineage_full = read_learning_lineage(type_no, in_pop_full);
 
     //output lineage graph
     std::ofstream outgraph(output_dir_relative_path + "//res//graph.dot");

@@ -335,8 +335,8 @@ void graphic_test()
 
     std::ifstream in_pop(".//experiments//sim_2//res//pop.dat");
     std::ifstream in_pop_full(".//experiments//sim_2//res//pop_full.dat");
-    Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, mem_no, in_pop);
-    Lineage<Cell_Learn> lineage_full = read_learning_lineage(type_no, mem_no, in_pop_full);
+    Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, in_pop);
+    Lineage<Cell_Learn> lineage_full = read_learning_lineage(type_no, in_pop_full);
 
     //lambda
     const int mesh_size = 50;
@@ -1130,7 +1130,7 @@ Lineage<Cell_Learn> generate_lineage_learning(std::string setting_dir_rel_path, 
     const int mem_no = std::stoi(parameters["mem_no"]);
     const int type_no = std::stoi(parameters["type_no"]);
 
-    return read_learning_lineage(type_no, mem_no, in_pop);
+    return read_learning_lineage(type_no, in_pop);
 }
 
 std::vector<double> sim_no_learning_inf(const std::string &setting_dir_rel_path, const std::string &out_dir_rel_path, const std::vector<std::vector<double>> &transition = {}) //can change transition matrix by the last arg; return cells.lambdas
@@ -1286,8 +1286,8 @@ void test_lineage_push()
 
     std::ifstream in_pop(".//experiments//sim_2_no_growth_comp//res//learning//pop.dat");
     std::ifstream in_pop_full(".//experiments//sim_2_no_growth_comp//res//learning//pop_full.dat");
-    Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, mem_no, in_pop);
-    Lineage<Cell_Learn> lienage_orginal = read_learning_lineage(type_no, mem_no, in_pop);
+    Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, in_pop);
+    Lineage<Cell_Learn> lienage_orginal = read_learning_lineage(type_no, in_pop);
 
     lineage.push(lineage);
 
@@ -1319,7 +1319,7 @@ void test_calc_lambda()
     const int mem_no = std::stoi(parameters["mem_no"]);
     const int type_no = std::stoi(parameters["type_no"]);
 
-    Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, mem_no, in_pop);
+    Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, in_pop);
 
     lineage.graphic(cell2lambda, out_ind_learning_lineage, out_ind_learning_lineage_max_min);
 }
@@ -1734,10 +1734,10 @@ double ff_thm_expected_gain(const Cell_Learn &cell, const std::vector<double> &Q
             double second_moment = 0.0;
             for (int i = 0; i != type_no; i++)
             {
-                first_moment += mean_replication[e][i];
-                second_moment += mean_replication[e][i] * mean_replication[ef][i];
+                first_moment += mean_replication[e][i] * cell.transition[0][i];
+                second_moment += mean_replication[e][i] * mean_replication[ef][i] * cell.transition[0][i];
             }
-            res += (log(second_moment) - 2 * log(first_moment)) * Q_env[e] * Q_env[ef];
+            res += (log(second_moment) - 2.0 * log(first_moment)) * Q_env[e] * Q_env[ef];
         }
     }
 
@@ -1761,6 +1761,10 @@ void check_ff_thm_from_lineage(Lineage<Cell_Learn> &lineage, std::function<doubl
             if (cell.memory[0] < 0.01) //no learning, 0.01 is machine epsilon
                 continue;
 
+            //skip root cell
+            if (cell.id().find('S') == std::string::npos)
+                continue;
+
             Cell_Learn parent = lineage.parent(cell);
 
             double lambda_cell = calc_lambda(cell);
@@ -1779,7 +1783,7 @@ void check_ff_thm_from_lineage(Lineage<Cell_Learn> &lineage, std::function<doubl
     //drawing, to be implemented if necesarry
 }
 
-void check_ff_thm_from_path(const std::string &setting_rel_path, const std::string &output_rel_path, const std::string &setting_for_calc_lambda_rel_path, const std::string &output_for_calc_lambda_rel_path)
+void check_ff_thm_from_path(const std::string &setting_rel_path, const std::string &output_rel_path, const std::string &setting_for_calc_lambda_rel_path, const std::string &output_for_calc_lambda_rel_path) //only for iid env. TODO? impletemnt Markov ver.
 {
 
     //read paramers to define const variables
@@ -1793,17 +1797,29 @@ void check_ff_thm_from_path(const std::string &setting_rel_path, const std::stri
 
     //learning rule, to be updated
     auto ancestral_learning = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
-        //update ancestral jump
-        jump_hist[p_type][d_type] += learning_rate;
+        //wait time_estimate_retro generations w/o learning and collect empirical distribution
+        if (mem[0] + 1.0 < time_estimate_retro - 0.1) //to avoid numerical error, I inserted "-0.1"
+        {
+            mem[0] = floor(mem[0] + 1.1); //to avoid numerical error
+
+            //update ancestral jump
+            jump_hist[p_type][d_type] += 1.0 / time_estimate_retro;
+            return;
+        }
+
+        //else learing
+        mem[0] = 0.0;
 
         //iid strategy
         double sum = 0.0;
         std::vector<double> pi(type_no, 0.0);
+        std::vector<double> original_pi(type_no, 0.0);
         for (int i = 0; i != type_no; i++)
         {
             for (int j = 0; j != type_no; j++)
             {
                 pi[i] += jump_hist[j][i];
+                original_pi[j] = tran[i][j];
             }
             sum += pi[i];
         }
@@ -1812,8 +1828,8 @@ void check_ff_thm_from_path(const std::string &setting_rel_path, const std::stri
         {
             for (int j = 0; j != type_no; j++)
             {
-                jump_hist[i][j] /= sum;
-                tran[i][j] = pi[j] / sum;
+                jump_hist[i][j] = 0.0;                                                       //clear history for the next estimation of the empirical distribution
+                tran[i][j] = learning_rate * pi[j] + (1.0 - learning_rate) * original_pi[j]; //update
             }
         }
     };
@@ -1823,27 +1839,52 @@ void check_ff_thm_from_path(const std::string &setting_rel_path, const std::stri
 
     //pass for check_ff_thm_from_lineage to calculate ***actual*** fitness gain of each cell
     auto cell2lambda = [&](const Cell_Learn &cell) {
-        return calc_lambda(cell, setting_calc_lambda_dir_rel_path, out_calc_lambda_dir_rel_path);
+        return calc_lambda(cell, setting_for_calc_lambda_rel_path, output_for_calc_lambda_rel_path);
     };
 
     //pass for check_ff_thm_from_lineage to calculate ***expected*** fitness gain of each cell
     //first read parameters
-    std::ifstream in_env(setting_dir_rel_path + "//env.dat");
+    std::ifstream in_env(setting_rel_path + "//env.dat");
     Markov_Environments env = read_env(in_env);
+    std::vector<double> Q_env;
+    for (int y = 0; y != env.cardinality(); y++)
+    {
+        Q_env.push_back(env.get_transition(0, y));
+    }
 
     //replication
     std::vector<std::vector<std::vector<double>>> replication;
-    std::ifstream in_repl(setting_dir_rel_path + "//replication.dat");
+    std::ifstream in_repl(setting_rel_path + "//replication.dat");
     read3DTensor<double>(replication, in_repl);
-    w.set_offspring_distributions(replication);
+    std::vector<std::vector<double>> mean_replication;
+    for (int y = 0; y != Q_env.size(); y++)
+    {
+        std::vector<double> mean_vec;
+        for (int x = 0; x != type_no; x++)
+        {
+            double mean = 0.0;
+            for (int i = 0; i != replication[y][x].size(); i++)
+            {
+                mean += replication[y][x][i] * i;
+            }
+            mean_vec.push_back(mean);
+        }
+        mean_replication.push_back(mean_vec);
+    }
 
     auto cell2expected = [&](const Cell_Learn &cell) {
-        return ff_thm_expected_gain(cell, , , )
-    } //check ff-thm
+        return ff_thm_expected_gain(cell, Q_env, mean_replication, learning_rate);
+    }; //check ff-thm
     std::ofstream out_ff_thm(output_rel_path + "//ff_thm.dat");
-    check_ff_thm_from_lineage(lineage, cell2lambda, , out_ff_thm);
+    check_ff_thm_from_lineage(lineage, cell2lambda, cell2expected, out_ff_thm);
 }
 
 void sim_6_check_ff_thm()
 {
+    //check const-env
+    check_ff_thm_from_path(
+        ".//experiments//sim_6_ffthm//const_env",
+        ".//experiments//sim_6_ffthm//const_env//res",
+        ".//experiments//sim_6_ffthm//const_env//calc_lambdas",
+        ".//experiments//sim_6_ffthm//const_env//calc_lambdas//res");
 }

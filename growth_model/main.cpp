@@ -37,5 +37,7 @@ int main()
    //no_spine_learning();
    //compare_common_and_individual_learning_iid();
 
-   sim5_random_search_and_growth();
+   //sim5_random_search_and_growth();
+
+   sim_6_check_ff_thm();
 }

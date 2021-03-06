@@ -54,7 +54,7 @@ public:
 
 Lineage<Cell> read_lineage(std::ifstream &in);
 
-Lineage<Cell_Learn> read_learning_lineage(int type_no, int memory_no, std::ifstream &in);
+Lineage<Cell_Learn> read_learning_lineage(int type_no, std::ifstream &in);
 
 template <typename T>
 Lineage<T>::Lineage(const std::vector<std::vector<T>> population, std::map<std::string, T> pop_map)

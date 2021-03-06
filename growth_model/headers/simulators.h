@@ -73,6 +73,7 @@ public:
 
     virtual int current_state() const { return m_current_state; };
     virtual int cardinality() const { return m_cardinality; }
+    virtual double get_transition(int y_from, int y_to, int time = 0) const { return transition[y_from][y_to](0); };
 
     //void set_initial(int init);
     void set_initial_distribution(const std::vector<double> &init);

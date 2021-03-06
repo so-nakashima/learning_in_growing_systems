@@ -469,6 +469,7 @@ void Cell_Learn::record(std::ofstream *out)
     out_mat(ancestral_jump, out);
     out_mat(transition, out);
     //out_vec(replication_history, out);
+    *out << memory.size() << " ";
     out_vec(memory, out);
     *out << std::endl;
 }
