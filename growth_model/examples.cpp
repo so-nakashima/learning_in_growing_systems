@@ -1730,21 +1730,23 @@ double ff_thm_expected_gain(const Cell_Learn &cell, const std::vector<double> &Q
         for (int ef = 0; ef != env_no; ef++)
         {
 
-            double first_moment = 0.0;
+            double first_moment1 = 0.0;
+            double first_moment2 = 0.0;
             double second_moment = 0.0;
             for (int i = 0; i != type_no; i++)
             {
-                first_moment += mean_replication[e][i] * cell.transition[0][i];
+                first_moment1 += mean_replication[e][i] * cell.transition[0][i];
+                first_moment2 += mean_replication[ef][i] * cell.transition[0][i];
                 second_moment += mean_replication[e][i] * mean_replication[ef][i] * cell.transition[0][i];
             }
-            res += log(second_moment / first_moment / first_moment) * Q_env[e] * Q_env[ef];
+            res += log(second_moment / first_moment1 / first_moment2) * Q_env[e] * Q_env[ef];
         }
     }
 
     return res * learning_rate;
 }
 
-void check_ff_thm_from_lineage(Lineage<Cell_Learn> &lineage, std::function<double(Cell_Learn)> calc_lambda, std::function<double(Cell_Learn)> calc_expected_gain, std::ofstream &out, std::ofstream &out_detail)
+void check_ff_thm_from_lineage(Lineage<Cell_Learn> &lineage, std::function<double(Cell_Learn)> calc_lambda, std::function<double(Cell_Learn)> calc_expected_gain, std::ofstream &out, std::ofstream &out_detail, const int pickup_no = std::numeric_limits<int>::max())
 //cell.memory[0] = 0 if no learning occurs and > 0 otherwise
 {
     //store fitness gain of the cells in lienage
@@ -1782,6 +1784,8 @@ void check_ff_thm_from_lineage(Lineage<Cell_Learn> &lineage, std::function<doubl
             parent.record(&out_detail);
             cell.record(&out_detail);
             counter++;
+            if (counter > pickup_no)
+                return;
         }
     }
 
@@ -1905,6 +1909,17 @@ void generate_random_initial_cell_learn(const std::string &setting_dir_rel_path,
         initial_cell << rand_type(mt) << std::endl
                      << std::endl;
 
+        //jump history
+        for (int i = 0; i != type_no; i++)
+        {
+            for (int j = 0; j != type_no; j++)
+            {
+                initial_cell << "0 ";
+            }
+            initial_cell << std::endl;
+        }
+        initial_cell << std::endl;
+
         //construct transition
         std::vector<double> pi(type_no);
         double sum = 0.0;
@@ -1918,10 +1933,11 @@ void generate_random_initial_cell_learn(const std::string &setting_dir_rel_path,
         {
             for (int k = 0; k != type_no; k++)
             {
-                initial_cell << pi[j] / sum << " ";
+                initial_cell << pi[k] / sum << " ";
             }
             initial_cell << std::endl;
         }
+        initial_cell << std::endl;
 
         //replication history
         initial_cell << 0 << std::endl
@@ -1946,6 +1962,7 @@ void check_ff_thm_from_path_random_transition(const std::string &setting_rel_pat
     const int time_estimate_retro = std::stoi(parameters["time_estimate_retro"]);
     const int max_cell_no = std::stoi(parameters["max_cell_no"]);
     const int init_cell_no = std::stoi(parameters["init_cell_no"]);
+    const int pickup_no = std::stoi(parameters["pickup_no"]);
 
     //learning rule, to be updated
     auto ancestral_learning = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
@@ -2036,7 +2053,7 @@ void check_ff_thm_from_path_random_transition(const std::string &setting_rel_pat
     }; //check ff-thm
     std::ofstream out_ff_thm(output_rel_path + "//ff_thm.dat", std::ios::app);
     std::ofstream out_ff_thm_detail(output_rel_path + "//ff_thm_detail.dat", std::ios::app);
-    check_ff_thm_from_lineage(lineage, cell2lambda, cell2expected, out_ff_thm, out_ff_thm_detail);
+    check_ff_thm_from_lineage(lineage, cell2lambda, cell2expected, out_ff_thm, out_ff_thm_detail, pickup_no);
 }
 
 void sim_6_check_ff_thm()
@@ -2048,13 +2065,16 @@ void sim_6_check_ff_thm()
     //     ".//experiments//sim_6_ffthm//const_env//calc_lambdas",
     //     ".//experiments//sim_6_ffthm//const_env//calc_lambdas//res");
 
-    //check const-end-random-gen
-    for (int i = 0; i != 2; i++)
-    {
-        check_ff_thm_from_path_random_transition(
-            ".//experiments//sim_6_ffthm//const_env_random_transition",
-            ".//experiments//sim_6_ffthm//const_env_random_transition//res",
-            ".//experiments//sim_6_ffthm//const_env_random_transition//calc_lambdas",
-            ".//experiments//sim_6_ffthm//const_env_random_transition//calc_lambdas//res");
-    }
+    // //check const-end-random-gen
+    // check_ff_thm_from_path_random_transition(
+    //     ".//experiments//sim_6_ffthm//const_env_random_transition",
+    //     ".//experiments//sim_6_ffthm//const_env_random_transition//res",
+    //     ".//experiments//sim_6_ffthm//const_env_random_transition//calc_lambdas",
+    //     ".//experiments//sim_6_ffthm//const_env_random_transition//calc_lambdas//res");
+
+    check_ff_thm_from_path_random_transition(
+        ".//experiments//sim_6_ffthm//non_const_env",
+        ".//experiments//sim_6_ffthm//non_const_env//res",
+        ".//experiments//sim_6_ffthm//non_const_env//calc_lambdas",
+        ".//experiments//sim_6_ffthm//non_const_env//calc_lambdas//res");
 }
