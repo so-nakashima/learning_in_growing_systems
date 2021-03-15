@@ -1739,14 +1739,78 @@ double ff_thm_expected_gain(const Cell_Learn &cell, const std::vector<double> &Q
                 first_moment2 += mean_replication[ef][i] * cell.transition[0][i];
                 second_moment += mean_replication[e][i] * mean_replication[ef][i] * cell.transition[0][i];
             }
-            res += log(second_moment / first_moment1 / first_moment2) * Q_env[e] * Q_env[ef];
+            res += log(second_moment / first_moment1 / first_moment1) * Q_env[e] * Q_env[ef];
         }
     }
 
     return res * learning_rate;
 }
 
-void check_ff_thm_from_lineage(Lineage<Cell_Learn> &lineage, std::function<double(Cell_Learn)> calc_lambda, std::function<double(Cell_Learn)> calc_expected_gain, std::ofstream &out, std::ofstream &out_detail, const int pickup_no = std::numeric_limits<int>::max())
+double ff_thm_KL(const Cell_Learn &cell, const std::vector<double> &Q_env, const std::vector<std::vector<double>> &mean_replication, double learning_rate)
+{
+    int env_no = Q_env.size();
+    assert(env_no > 0);
+    assert(mean_replication.size() == env_no);
+    int type_no = mean_replication[0].size();
+
+    //construct pi_b
+    std::vector<std::vector<double>> pi_b;
+    for (int y = 0; y != env_no; y++)
+    {
+        double sum = 0.0;
+        std::vector<double> pi_b_y;
+        for (int x = 0; x != type_no; x++)
+        {
+            double pi_b_x_y = mean_replication[y][x] * cell.transition[0][x];
+            sum += pi_b_x_y;
+            pi_b_y.push_back(pi_b_x_y);
+        }
+        for (int x = 0; x != type_no; x++)
+        {
+            pi_b_y[x] /= sum;
+        }
+        pi_b.push_back(pi_b_y);
+    }
+
+    //construct Q_bar
+    std::vector<std::vector<double>> Q_bar;
+    for (int y1 = 0; y1 != env_no; y1++)
+    {
+        double sum = 0.0;
+        std::vector<double> Q_bar_y1; //Q(y2 | y1)
+        for (int y2 = 0; y2 != env_no; y2++)
+        {
+            double Q_bar_y2_y1 = 0.0;
+            for (int x = 0; x != type_no; x++)
+            {
+                double temp = mean_replication[y1][x] * pi_b[y2][x] * Q_env[y2];
+                Q_bar_y2_y1 += temp;
+                sum += temp;
+            }
+            Q_bar_y1.push_back(Q_bar_y2_y1);
+        }
+
+        for (int y2 = 0; y2 != env_no; y2++)
+        {
+            Q_bar_y1[y2] /= sum;
+        }
+        Q_bar.push_back(Q_bar_y1);
+    }
+
+    //calculate KL
+    double res = 0.0;
+    for (int y1 = 0; y1 != env_no; y1++)
+    {
+        for (int y2 = 0; y2 != env_no; y2++)
+        {
+            res += Q_env[y1] * Q_env[y2] * log(Q_env[y2] / Q_bar[y2][y1]);
+        }
+    }
+
+    return res * learning_rate;
+}
+
+void check_ff_thm_from_lineage(Lineage<Cell_Learn> &lineage, std::function<double(Cell_Learn)> calc_lambda, std::function<double(Cell_Learn)> calc_expected_gain, std::function<double(Cell_Learn)> calc_KL, std::ofstream &out, std::ofstream &out_detail, const int pickup_no = std::numeric_limits<int>::max())
 //cell.memory[0] = 0 if no learning occurs and > 0 otherwise
 {
     //store fitness gain of the cells in lienage
@@ -1778,8 +1842,10 @@ void check_ff_thm_from_lineage(Lineage<Cell_Learn> &lineage, std::function<doubl
             double expected_gain = calc_expected_gain(parent);
             expected_gains.push_back(expected_gain);
 
+            double KL = calc_KL(parent);
+
             //output
-            out << actual_gain << " " << expected_gain << std::endl;
+            out << actual_gain << " " << expected_gain << " " << KL << std::endl;
             out_detail << counter << std::endl;
             parent.record(&out_detail);
             cell.record(&out_detail);
@@ -1886,9 +1952,14 @@ void check_ff_thm_from_path(const std::string &setting_rel_path, const std::stri
     auto cell2expected = [&](const Cell_Learn &cell) {
         return ff_thm_expected_gain(cell, Q_env, mean_replication, learning_rate);
     }; //check ff-thm
+
+    auto cell2KL = [&](const Cell_Learn &cell) {
+        return ff_thm_KL(cell, Q_env, mean_replication, learning_rate);
+    }; //check ff-thm
+
     std::ofstream out_ff_thm(output_rel_path + "//ff_thm.dat");
     std::ofstream out_ff_thm_detail(output_rel_path + "//ff_thm_detail.dat");
-    check_ff_thm_from_lineage(lineage, cell2lambda, cell2expected, out_ff_thm, out_ff_thm_detail);
+    check_ff_thm_from_lineage(lineage, cell2lambda, cell2expected, cell2KL, out_ff_thm, out_ff_thm_detail);
 }
 
 void generate_random_initial_cell_learn(const std::string &setting_dir_rel_path, const int type_no, const int cell_no, const int max_cell_no) //memory structure is fixed
@@ -2050,10 +2121,223 @@ void check_ff_thm_from_path_random_transition(const std::string &setting_rel_pat
 
     auto cell2expected = [&](const Cell_Learn &cell) {
         return ff_thm_expected_gain(cell, Q_env, mean_replication, learning_rate);
-    }; //check ff-thm
+    };
+    auto cell2KL = [&](const Cell_Learn &cell) {
+        return ff_thm_KL(cell, Q_env, mean_replication, learning_rate);
+    };
+
+    //check ff-thm
     std::ofstream out_ff_thm(output_rel_path + "//ff_thm.dat", std::ios::app);
     std::ofstream out_ff_thm_detail(output_rel_path + "//ff_thm_detail.dat", std::ios::app);
-    check_ff_thm_from_lineage(lineage, cell2lambda, cell2expected, out_ff_thm, out_ff_thm_detail, pickup_no);
+    check_ff_thm_from_lineage(lineage, cell2lambda, cell2expected, cell2KL, out_ff_thm, out_ff_thm_detail, pickup_no);
+}
+
+bool starts_with(const std::string &s, const std::string &prefix)
+{
+    auto size = prefix.size();
+    if (s.size() < size)
+        return false;
+    return std::equal(std::begin(prefix), std::end(prefix), std::begin(s));
+}
+
+std::vector<Cell_Learn> read_selected_generation(const std::string &file_rel_path, const int target_gen, const int type_no)
+{
+    std::ifstream in(file_rel_path);
+
+    //for loading
+    std::string id;
+    int type;
+    std::vector<std::vector<double>> ancestral_jump;
+    std::vector<std::vector<double>> transition;
+    std::vector<double> replication_history;
+    std::vector<double> mem;
+
+    std::vector<Cell_Learn> res;
+
+    while (in >> id)
+    {
+        //load a cell from lineage
+        in >> type;
+        readMat(type_no, type_no, ancestral_jump, in);
+        readMat(type_no, type_no, transition, in);
+        //readVec(type_no, replication_history, in);
+        int memory_no;
+        in >> memory_no;
+        readVec(memory_no, mem, in);
+
+        //check generation
+        const int gen = std::count(id.begin(), id.end(), 'S');
+        if (gen == target_gen)
+        {
+
+            Cell_Learn cell(type, id, ancestral_jump, transition, replication_history, mem);
+            res.push_back(cell);
+        }
+    }
+
+    return res;
+}
+void check_ff_from_file_one_path(const int type_no, const int end_time, const std::string &file_rel_path, std::ofstream &out, std::function<double(Cell_Learn)> calc_lambda, std::function<double(Cell_Learn)> calc_expected_gain, std::function<double(Cell_Learn)> calc_KL)
+//calculate gains if the cell is on the selected path
+{
+
+    //path information
+    std::string path;
+
+    for (int gen = end_time; gen > 0; gen--)
+    {
+        //load a cell from lineage
+        std::vector<Cell_Learn> current_pop = read_selected_generation(file_rel_path, gen, type_no);
+        std::vector<Cell_Learn> prev_pop = read_selected_generation(file_rel_path, gen - 1, type_no);
+
+        //skip the generation w/o learning
+        assert(current_pop.size() > 0);
+        assert(current_pop[0].memory.size() > 0);
+        if (current_pop[0].memory[0] > 0.01) //no learning, 0.01 is machine epsilon, also skip root cells
+            continue;
+
+        Cell_Learn cell;
+
+        //serach a cell on the selected retrospective path
+        for (auto cell_cur : current_pop)
+        {
+            if (path.empty() || starts_with(path, cell_cur.id())) //at the end of lineage, we can chose arbitrary sell (path.empty())
+            {
+                cell = cell_cur;
+                break;
+            }
+        }
+        //update path infomation
+        path = cell.id();
+
+        //search parent cell
+        Cell_Learn parent;
+        for (auto cell_prev : prev_pop)
+        {
+            if (cell_prev.id() == parent_id(cell.id()))
+            {
+                parent = cell_prev;
+                break;
+            }
+        }
+
+        //actual gain
+        const double lambda_cell = calc_lambda(cell);
+        const double lambda_parent = calc_lambda(parent);
+        const double actual_gain = lambda_cell - lambda_parent;
+
+        //expected gain (variance and KL)
+        const double expected_gain = calc_expected_gain(parent);
+        double KL = calc_KL(parent);
+
+        //output
+        out << actual_gain << " " << expected_gain << " " << KL << std::endl;
+    }
+}
+
+void check_ff_thm_one_path(const std::string &setting_rel_path, const std::string &output_rel_path, const std::string &setting_for_calc_lambda_rel_path, const std::string &output_for_calc_lambda_rel_path) //only for iid env. TODO? impletemnt Markov ver.
+{
+
+    //read paramers to define const variables
+    std::ifstream in_other(setting_rel_path + "//other.dat");
+    std::map<std::string, std::string> parameters = read_parameters(in_other);
+
+    //set learning rule to online EM
+    const int type_no = std::stoi(parameters["type_no"]);
+    const double learning_rate = std::stod(parameters["learning_rate"]);
+    const int time_estimate_retro = std::stoi(parameters["time_estimate_retro"]);
+    const int end_time = std::stoi(parameters["end_time"]);
+
+    //learning rule, to be updated
+    auto ancestral_learning = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
+        //wait time_estimate_retro generations w/o learning and collect empirical distribution
+        if (mem[0] + 1.0 < time_estimate_retro - 0.1) //to avoid numerical error, I inserted "-0.1"
+        {
+            mem[0] = floor(mem[0] + 1.1); //to avoid numerical error
+
+            //update ancestral jump
+            jump_hist[p_type][d_type] += 1.0 / time_estimate_retro;
+            return;
+        }
+
+        //else learing
+        mem[0] = 0.0;
+
+        //iid strategy
+        double sum_pi = 0.0;
+        double sum_original = 0.0;
+        std::vector<double> pi(type_no, 0.0);
+        std::vector<double> original_pi(type_no, 0.0);
+        for (int i = 0; i != type_no; i++)
+        {
+            for (int j = 0; j != type_no; j++)
+            {
+                pi[i] += jump_hist[j][i];
+                sum_pi += jump_hist[j][i];
+                original_pi[j] = tran[i][j];
+                sum_original += tran[i][j];
+            }
+        }
+
+        for (int i = 0; i != type_no; i++)
+        {
+            for (int j = 0; j != type_no; j++)
+            {
+                jump_hist[i][j] = 0.0;                                                                               //clear history for the next estimation of the empirical distribution
+                tran[i][j] = learning_rate * pi[j] / sum_pi + (1.0 - learning_rate) * original_pi[j] / sum_original; //update
+            }
+        }
+    };
+
+    //execute simulation and get lineage
+    sim_learning(setting_rel_path, output_rel_path, ancestral_learning, /* enable_common_learning */ false);
+
+    //pass for check_ff_thm_from_lineage to calculate ***actual*** fitness gain of each cell
+    auto cell2lambda = [&](const Cell_Learn &cell) {
+        return calc_lambda(cell, setting_for_calc_lambda_rel_path, output_for_calc_lambda_rel_path);
+    };
+
+    //pass for check_ff_thm_from_lineage to calculate ***expected*** fitness gain of each cell
+    //first read parameters
+    std::ifstream in_env(setting_rel_path + "//env.dat");
+    Markov_Environments env = read_env(in_env);
+    std::vector<double> Q_env;
+    for (int y = 0; y != env.cardinality(); y++)
+    {
+        Q_env.push_back(env.get_transition(0, y));
+    }
+
+    //replication
+    std::vector<std::vector<std::vector<double>>> replication;
+    std::ifstream in_repl(setting_rel_path + "//replication.dat");
+    read3DTensor<double>(replication, in_repl);
+    std::vector<std::vector<double>> mean_replication;
+    for (int y = 0; y != Q_env.size(); y++)
+    {
+        std::vector<double> mean_vec;
+        for (int x = 0; x != type_no; x++)
+        {
+            double mean = 0.0;
+            for (int i = 0; i != replication[y][x].size(); i++)
+            {
+                mean += replication[y][x][i] * i;
+            }
+            mean_vec.push_back(mean);
+        }
+        mean_replication.push_back(mean_vec);
+    }
+
+    auto cell2expected = [&](const Cell_Learn &cell) {
+        return ff_thm_expected_gain(cell, Q_env, mean_replication, learning_rate);
+    }; //check ff-thm
+
+    auto cell2KL = [&](const Cell_Learn &cell) {
+        return ff_thm_KL(cell, Q_env, mean_replication, learning_rate);
+    }; //check ff-thm
+
+    std::string pop_file_name = output_rel_path + "//pop.dat";
+    std::ofstream out_ff_thm(output_rel_path + "//ff_thm.dat");
+    check_ff_from_file_one_path(type_no, end_time, pop_file_name, out_ff_thm, cell2lambda, cell2expected, cell2KL);
 }
 
 void sim_6_check_ff_thm()
@@ -2065,16 +2349,28 @@ void sim_6_check_ff_thm()
     //     ".//experiments//sim_6_ffthm//const_env//calc_lambdas",
     //     ".//experiments//sim_6_ffthm//const_env//calc_lambdas//res");
 
-    // //check const-end-random-gen
+    //check const-end-random-gen
     // check_ff_thm_from_path_random_transition(
     //     ".//experiments//sim_6_ffthm//const_env_random_transition",
     //     ".//experiments//sim_6_ffthm//const_env_random_transition//res",
     //     ".//experiments//sim_6_ffthm//const_env_random_transition//calc_lambdas",
     //     ".//experiments//sim_6_ffthm//const_env_random_transition//calc_lambdas//res");
 
-    check_ff_thm_from_path_random_transition(
-        ".//experiments//sim_6_ffthm//non_const_env",
-        ".//experiments//sim_6_ffthm//non_const_env//res",
-        ".//experiments//sim_6_ffthm//non_const_env//calc_lambdas",
-        ".//experiments//sim_6_ffthm//non_const_env//calc_lambdas//res");
+    // check_ff_thm_from_path_random_transition(
+    //     ".//experiments//sim_6_ffthm//non_const_env",
+    //     ".//experiments//sim_6_ffthm//non_const_env//res",
+    //     ".//experiments//sim_6_ffthm//non_const_env//calc_lambdas",
+    //     ".//experiments//sim_6_ffthm//non_const_env//calc_lambdas//res");
+
+    // check_ff_thm_from_path_random_transition(
+    //     ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration",
+    //     ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration//res",
+    //     ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration//calc_lambdas",
+    //     ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration//calc_lambdas//res");
+
+    check_ff_thm_one_path(
+        ".//experiments//sim_6_ffthm//const_env_path",
+        ".//experiments//sim_6_ffthm//const_env_path//res",
+        ".//experiments//sim_6_ffthm//const_env_path//calc_lambdas",
+        ".//experiments//sim_6_ffthm//const_env_path//calc_lambdas//res");
 }

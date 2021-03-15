@@ -68,21 +68,13 @@ Lineage<T>::~Lineage()
 {
 }
 
+std::string parent_id(std::string id);
+
 template <typename T>
 T Lineage<T>::parent(const T &cell)
 {
-    std::string id = cell.id();
-    assert(id.size() > 1);
-    // compute parent id by eliminating the tail
-    // ex 0S2S12S31 -> 0S2S12S
-    while (id[id.size() - 1] != 'S')
-    {
-        id.pop_back();
-    }
-    //ex 0S2S12S -> 0S2S12
-    id.pop_back();
-
-    return m_pop_map[id];
+    const std::string id = cell.id();
+    return m_pop_map[parent_id(id)];
 }
 
 template <typename T>

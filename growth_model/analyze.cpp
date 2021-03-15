@@ -108,3 +108,19 @@ namespace Lineage_utility
         return "\"" + str + "\"";
     }
 } // namespace Lineage_utility
+
+std::string parent_id(std::string id)
+{
+    assert(id.size() > 1);
+    // compute parent id by eliminating the tail
+    // ex 0S2S12S31 -> 0S2S12S
+    while (id[id.size() - 1] != 'S')
+    {
+        id.pop_back();
+    }
+    //ex 0S2S12S -> 0S2S12
+    id.pop_back();
+
+    return id;
+}
+
