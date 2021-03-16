@@ -2297,7 +2297,7 @@ void check_ff_thm_one_path(const std::string &setting_rel_path, const std::strin
         }
     };
 
-    //replication for exact learning
+    //read replication for exact learning
     std::vector<std::vector<std::vector<double>>> replication;
     std::ifstream in_repl(setting_rel_path + "//replication.dat");
     read3DTensor<double>(replication, in_repl);
@@ -2317,45 +2317,7 @@ void check_ff_thm_one_path(const std::string &setting_rel_path, const std::strin
         mean_replication.push_back(mean_vec);
     }
 
-    auto exact_learning = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
-        //wait time_estimate_retro generations w/o learning and collect empirical distribution
-
-        //always learns
-        mem[0] = 0.0;
-
-        //iid strategy
-        double pi = 0.0;
-        double sum_pi = 0.0;
-        std::vector<double> pi(type_no, 0.0);
-        for (int i = 0; i != type_no; i++)
-        {
-            for (int j = 0; j != type_no; j++)
-            {
-                pi[j] = tran[i][j];
-                sum_pi += tran[i][j];
-            }
-        }
-
-        for (int i = 0; i != type_no; i++)
-        {
-            for (int j = 0; j != type_no; j++)
-            {
-                jump_hist[i][j] = 0.0;                                                                               //clear history for the next estimation of the empirical distribution
-                tran[i][j] = learning_rate * pi[j] / sum_pi + (1.0 - learning_rate) * original_pi[j] / sum_original; //update
-            }
-        }
-    };
-
-    //execute simulation and get lineage
-    sim_learning(setting_rel_path, output_rel_path, ancestral_learning, /* enable_common_learning */ false);
-
-    //pass for check_ff_thm_from_lineage to calculate ***actual*** fitness gain of each cell
-    auto cell2lambda = [&](const Cell_Learn &cell) {
-        return calc_lambda(cell, setting_for_calc_lambda_rel_path, output_for_calc_lambda_rel_path);
-    };
-
-    //pass for check_ff_thm_from_lineage to calculate ***expected*** fitness gain of each cell
-    //first read parameters
+    //read environment for exact learing
     std::ifstream in_env(setting_rel_path + "//env.dat");
     Markov_Environments env = read_env(in_env);
     std::vector<double> Q_env;
@@ -2363,6 +2325,57 @@ void check_ff_thm_one_path(const std::string &setting_rel_path, const std::strin
     {
         Q_env.push_back(env.get_transition(0, y));
     }
+
+    auto exact_learning = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
+        //always learns (mem[0] == 0 means learning occurs at this time step)
+        mem[0] = 0.0;
+
+        //memorize original pi
+        std::vector<double> original_pi;
+        for (int i = 0; i != type_no; i++)
+        {
+            original_pi.push_back(tran[0][i]);
+        }
+
+        //iid strategy
+        std::vector<double> pi(type_no, 0.0);
+        for (int y = 0; y != Q_env.size(); y++)
+        {
+            std::vector<double> pi_y(type_no, 0.0);
+            double normalizeation_factor = 0.0;
+            std::vector<double> pi(type_no, 0.0);
+            for (int i = 0; i != type_no; i++)
+            {
+                pi_y[i] = replication[y][i] * tran[0][i];
+                normalizeation_factor += pi_y[i];
+            }
+
+            //normalization and update averaged pi
+            for (int i = 0; i != type_no; i++)
+            {
+                pi_y[i] /= normalizeation_factor;
+                pi[i] += pi_y[i] * Q_env[y];
+            }
+        }
+
+        for (int i = 0; i != type_no; i++)
+        {
+            for (int j = 0; j != type_no; j++)
+            {
+                tran[i][j] = learning_rate * pi[j] + (1.0 - learning_rate) * original_pi[j]; //update
+            }
+        }
+    };
+
+    //execute simulation and get lineage
+    sim_learning(setting_rel_path, output_rel_path, exact_learning, /* enable_common_learning */ false);
+
+    //pass for check_ff_thm_from_lineage to calculate ***actual*** fitness gain of each cell
+    auto cell2lambda = [&](const Cell_Learn &cell) {
+        return calc_lambda(cell, setting_for_calc_lambda_rel_path, output_for_calc_lambda_rel_path);
+    };
+
+    //expected gains
 
     auto cell2expected = [&](const Cell_Learn &cell) {
         return ff_thm_expected_gain(cell, Q_env, mean_replication, learning_rate);
