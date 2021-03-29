@@ -6,6 +6,9 @@
 #include <iterator>
 #include <algorithm>
 #include <stdlib.h>
+#include "matplotlibcpp.h"
+
+namespace plt = matplotlibcpp;
 
 void test_env()
 {
@@ -21,7 +24,7 @@ void test_env()
     env.set_env_record(&out_env);
     w.set_environments(&env);
 
-    w.excecute();
+    w.execute();
 }
 
 void test_env_cells()
@@ -57,7 +60,7 @@ void test_env_cells()
     std::vector<std::vector<std::vector<double>>> replication = {{{0.0, 0.0, 1.0}, {0.0, 0.0, 1.0}}, {{0.0, 0.0, 1.0}, {0.0, 0.0, 1.0}}};
     w.set_offspring_distributions(replication);
 
-    w.excecute();
+    w.execute();
 }
 
 void file_read_test()
@@ -92,7 +95,7 @@ void file_read_test()
     cells.set_pop_record(&out_pop);
     cells.set_pop_full_record(&out_pop_full);
 
-    w.excecute();
+    w.execute();
 }
 
 void test_analyze()
@@ -218,7 +221,7 @@ void lambda_curve()
             cells.set_pop_record(&out_pop);
             cells.set_pop_full_record(&out_pop_full);
 
-            w.excecute();
+            w.execute();
 
             std::ifstream in_pop_full(".//experiments//sim_1//res//pop_full.dat");
 
@@ -242,7 +245,7 @@ void test_learning()
     std::ifstream in_env(".//experiments//sim_2//env.dat");
     Markov_Environments env = read_env(in_env);
 
-    //initalize population
+    //initialize population
     std::ifstream in_cells(".//experiments//sim_2//initial_cells.dat");
     Cells_Learn cells = read_cells_learn(in_cells);
 
@@ -309,7 +312,7 @@ void test_learning()
     cells.set_pop_record(&out_pop);
     cells.set_pop_full_record(&out_pop_full);
 
-    w.excecute();
+    w.execute();
 }
 
 std::vector<double> linspace(double first, double last, int len)
@@ -479,7 +482,7 @@ void lambda_sample()
                 cells.set_pop_record(&out_pop);
                 cells.set_pop_full_record(&out_pop_full);
 
-                w.excecute();
+                w.execute();
 
                 std::ifstream in_pop_full(".//experiments//sim_2//res//pop_full.dat");
 
@@ -555,7 +558,7 @@ void lambda_sample_highdim()
             cells.set_pop_record(&out_pop);
             cells.set_pop_full_record(&out_pop_full);
 
-            w.excecute();
+            w.execute();
 
             std::ifstream in_pop_full(".//experiments//sim_2//res//pop_full.dat");
 
@@ -605,7 +608,7 @@ void common_transition_test()
 
     w.set_environments(&env);
     w.set_population(&cells);
-    w.excecute();
+    w.execute();
 }
 
 /*void check_fluctuating_relation_for_common_vs_ind(){
@@ -665,7 +668,7 @@ void common_transition_test()
 
         w.set_environments(&env);
         w.set_population(&cells);
-        w.excecute();
+        w.execute();
 
         std::ifstream in_env_rec(".//experiments//sim_2//res//env.dat");
         std::vector<int> environments;
@@ -704,7 +707,7 @@ void common_transition_test()
 
         w_.set_environments(&env);
         w_.set_population(&cells_);
-        w_.excecute();
+        w_.execute();
 
 
         std::ifstream in_env_rec_(".//experiments//sim_2//res//env.dat");
@@ -754,7 +757,7 @@ double test_cells_infinite()
 
     w.set_environments(&env);
     w.set_population(&cells);
-    w.excecute();
+    w.execute();
 
     double res = 0.0;
     for (auto l : cells.lambdas)
@@ -793,7 +796,7 @@ double test_cells_infinite_common()
 
     w.set_environments(&env);
     w.set_population(&cells);
-    w.excecute();
+    w.execute();
 
     double res = 0.0;
     for (auto l : cells.lambdas)
@@ -829,7 +832,7 @@ double lambda_cells_infinite(int env_no, const std::vector<int> envs)
 
     w.set_environments(&env);
     w.set_population(&cells);
-    w.excecute();
+    w.execute();
 
     double res = 0.0;
     for (auto l : cells.lambdas)
@@ -865,7 +868,7 @@ double lambda_cells_infinite_common(int env_no, const std::vector<int> envs)
 
     w.set_environments(&env);
     w.set_population(&cells);
-    w.excecute();
+    w.execute();
 
     double res = 0.0;
     for (auto l : cells.lambdas)
@@ -905,7 +908,7 @@ double lambda_cells_infinite_common(int env_no, const std::vector<int> envs, std
 
     w.set_environments(&env);
     w.set_population(&cells);
-    w.excecute();
+    w.execute();
 
     vec = cells.hist_common_p_type;
 
@@ -1039,7 +1042,7 @@ void sim_learning(std::string setting_dir_rel_path, std::string output_dir_rel_p
     std::ifstream in_env(setting_dir_rel_path + "//env.dat");
     Markov_Environments env = read_env(in_env);
 
-    //initalize population
+    //initialize population
     std::ifstream in_cells(setting_dir_rel_path + "//initial_cells.dat");
     Cells_Learn *cells;
     //std::ofstream out_spine(output_dir_rel_path + "//spine.dat"); //only used for common learning
@@ -1077,7 +1080,7 @@ void sim_learning(std::string setting_dir_rel_path, std::string output_dir_rel_p
         ((Cells_Learn_Common *)cells)->set_out_spine(Pout_spine);
     }
 
-    w.excecute();
+    w.execute();
 
     delete cells;
     if (enable_common_learning)
@@ -1165,7 +1168,7 @@ std::vector<double> sim_no_learning_inf(const std::string &setting_dir_rel_path,
 
     w.set_environments(&env);
     w.set_population(&cells);
-    w.excecute();
+    w.execute();
 
     return cells.lambdas;
 }
@@ -1210,7 +1213,7 @@ void compare_common_and_individual_learning()
     std::ofstream out_common_learning(".//experiments//sim_2_no_growth_comp//res//common//graph.dat");
     std::ofstream out_whole_lineage(".//experiments//sim_2_no_growth_comp//res//whole//graph.dat");
 
-    //not necessary, just complete arg. of lienage.grphic
+    //not necessary, just complete arg. of lienage.graphic
     std::ofstream out_ind_learning_lineage_max_min(".//experiments//sim_2_no_growth_comp//res//learning//max_min.dat");
     std::ofstream out_common_learning_max_min(".//experiments//sim_2_no_growth_comp//res//common//max_min.dat");
     std::ofstream out_whole_max_min(".//experiments//sim_2_no_growth_comp//res//whole//max_min.dat");
@@ -1287,7 +1290,7 @@ void test_lineage_push()
     std::ifstream in_pop(".//experiments//sim_2_no_growth_comp//res//learning//pop.dat");
     std::ifstream in_pop_full(".//experiments//sim_2_no_growth_comp//res//learning//pop_full.dat");
     Lineage<Cell_Learn> lineage = read_learning_lineage(type_no, in_pop);
-    Lineage<Cell_Learn> lienage_orginal = read_learning_lineage(type_no, in_pop);
+    Lineage<Cell_Learn> lienage_original = read_learning_lineage(type_no, in_pop);
 
     lineage.push(lineage);
 
@@ -1338,7 +1341,7 @@ void no_spine_learning()
     //for drawing graph
     std::ofstream out_common_learning(".//experiments//sim_2_no_growth_comp//res//common//graph.dat");
 
-    //not necessary, just complete arg. of lienage.grphic
+    //not necessary, just complete arg. of lienage.graphic
     std::ofstream out_common_learning_max_min(".//experiments//sim_2_no_growth_comp//res//common//max_min.dat");
 
     //read paramers to define const variables
@@ -1398,7 +1401,7 @@ void compare_common_and_individual_learning_iid()
     std::ofstream out_common_learning(".//experiments//sim_4_no_growth_learning_artificial//res//common//graph.dat");
     std::ofstream out_whole_lineage(".//experiments//sim_4_no_growth_learning_artificial//res//whole//graph.dat");
 
-    //not necessary, just complete arg. of lienage.grphic
+    //not necessary, just complete arg. of lienage.graphic
     std::ofstream out_ind_learning_lineage_max_min(".//experiments//sim_4_no_growth_learning_artificial//res//learning//max_min.dat");
     std::ofstream out_common_learning_max_min(".//experiments//sim_4_no_growth_learning_artificial//res//common//max_min.dat");
     std::ofstream out_whole_max_min(".//experiments//sim_4_no_growth_learning_artificial//res//whole//max_min.dat");
@@ -1535,7 +1538,7 @@ void sim5_random_search_and_growth()
     std::ofstream out_whole_lineage(output_rel_path_4_whole + "//graph.dat");
     std::ofstream out_random_plus_adaptive_lineage(output_rel_path_4_random_plus_adaptive + "//graph.dat");
 
-    //not necessary, just complete arg. of lienage.grphic
+    //not necessary, just complete arg. of lienage.graphic
     std::ofstream out_random_lineage_min_max(output_rel_path_4_random + "//min-max.dat");
     std::ofstream out_adaptive_learning_min_max(output_rel_path_4_adaptive + "//min-max.dat");
     std::ofstream out_learning_lineage_min_max(output_rel_path_4_learning + "//min-max.dat");
@@ -1739,11 +1742,12 @@ double ff_thm_expected_gain(const Cell_Learn &cell, const std::vector<double> &Q
                 first_moment2 += mean_replication[ef][i] * cell.transition[0][i];
                 second_moment += mean_replication[e][i] * mean_replication[ef][i] * cell.transition[0][i];
             }
-            res += log(second_moment / first_moment1 / first_moment1) * Q_env[e] * Q_env[ef];
+            double covariance = second_moment - first_moment1 * first_moment2;
+            res += log(learning_rate * covariance / first_moment1 / first_moment2 + 1.0) * Q_env[e] * Q_env[ef];
         }
     }
 
-    return res * learning_rate;
+    return res;
 }
 
 double ff_thm_KL(const Cell_Learn &cell, const std::vector<double> &Q_env, const std::vector<std::vector<double>> &mean_replication, double learning_rate)
@@ -1772,6 +1776,19 @@ double ff_thm_KL(const Cell_Learn &cell, const std::vector<double> &Q_env, const
         pi_b.push_back(pi_b_y);
     }
 
+    //construct pi_alpha
+    std::vector<std::vector<double>> pi_alpha;
+    for (int y = 0; y != env_no; y++)
+    {
+        std::vector<double> pi_alpha_y;
+        for (int x = 0; x != type_no; x++)
+        {
+            const double pi_alpha_x_y = learning_rate * pi_b[y][x] + (1.0 - learning_rate) * cell.transition[0][x];
+            pi_alpha_y.push_back(pi_alpha_x_y);
+        }
+        pi_alpha.push_back(pi_alpha_y);
+    }
+
     //construct Q_bar
     std::vector<std::vector<double>> Q_bar;
     for (int y1 = 0; y1 != env_no; y1++)
@@ -1783,7 +1800,7 @@ double ff_thm_KL(const Cell_Learn &cell, const std::vector<double> &Q_env, const
             double Q_bar_y2_y1 = 0.0;
             for (int x = 0; x != type_no; x++)
             {
-                double temp = mean_replication[y1][x] * pi_b[y2][x] * Q_env[y2];
+                double temp = mean_replication[y1][x] * pi_alpha[y2][x] * Q_env[y2];
                 Q_bar_y2_y1 += temp;
                 sum += temp;
             }
@@ -1807,7 +1824,7 @@ double ff_thm_KL(const Cell_Learn &cell, const std::vector<double> &Q_env, const
         }
     }
 
-    return res * learning_rate;
+    return res;
 }
 
 void check_ff_thm_from_lineage(Lineage<Cell_Learn> &lineage, std::function<double(Cell_Learn)> calc_lambda, std::function<double(Cell_Learn)> calc_expected_gain, std::function<double(Cell_Learn)> calc_KL, std::ofstream &out, std::ofstream &out_detail, const int pickup_no = std::numeric_limits<int>::max())
@@ -1855,10 +1872,10 @@ void check_ff_thm_from_lineage(Lineage<Cell_Learn> &lineage, std::function<doubl
         }
     }
 
-    //drawing, to be implemented if necesarry
+    //drawing, to be implemented if necessary
 }
 
-void check_ff_thm_from_path(const std::string &setting_rel_path, const std::string &output_rel_path, const std::string &setting_for_calc_lambda_rel_path, const std::string &output_for_calc_lambda_rel_path) //only for iid env. TODO? impletemnt Markov ver.
+void check_ff_thm_from_path(const std::string &setting_rel_path, const std::string &output_rel_path, const std::string &setting_for_calc_lambda_rel_path, const std::string &output_for_calc_lambda_rel_path) //only for iid env. TODO? implement Markov ver.
 {
 
     //read paramers to define const variables
@@ -2020,7 +2037,7 @@ void generate_random_initial_cell_learn(const std::string &setting_dir_rel_path,
     }
 }
 
-void check_ff_thm_from_path_random_transition(const std::string &setting_rel_path, const std::string &output_rel_path, const std::string &setting_for_calc_lambda_rel_path, const std::string &output_for_calc_lambda_rel_path) //only for iid env. TODO? impletemnt Markov ver.
+void check_ff_thm_from_path_random_transition(const std::string &setting_rel_path, const std::string &output_rel_path, const std::string &setting_for_calc_lambda_rel_path, const std::string &output_for_calc_lambda_rel_path) //only for iid env. TODO? implement Markov ver.
 {
 
     //read paramers to define const variables
@@ -2061,8 +2078,11 @@ void check_ff_thm_from_path_random_transition(const std::string &setting_rel_pat
             {
                 pi[i] += jump_hist[j][i];
                 sum_pi += jump_hist[j][i];
-                original_pi[j] = tran[i][j];
-                sum_original += tran[i][j];
+                if (i == 0)
+                {
+                    original_pi[j] = tran[0][j];
+                    sum_original += tran[0][j];
+                }
             }
         }
 
@@ -2140,7 +2160,7 @@ bool starts_with(const std::string &s, const std::string &prefix)
     return std::equal(std::begin(prefix), std::end(prefix), std::begin(s));
 }
 
-std::vector<Cell_Learn> read_selected_generation(const std::string &file_rel_path, const int target_gen, const int type_no)
+std::vector<Cell_Learn> read_selected_generation(const std::string &file_rel_path, const int target_gen, const int type_no, bool is_no_record = false)
 {
     std::ifstream in(file_rel_path);
 
@@ -2161,15 +2181,17 @@ std::vector<Cell_Learn> read_selected_generation(const std::string &file_rel_pat
         readMat(type_no, type_no, ancestral_jump, in);
         readMat(type_no, type_no, transition, in);
         //readVec(type_no, replication_history, in);
-        int memory_no;
-        in >> memory_no;
-        readVec(memory_no, mem, in);
+        if (!is_no_record)
+        {
+            int memory_no;
+            in >> memory_no;
+            readVec(memory_no, mem, in);
+        }
 
         //check generation
         const int gen = std::count(id.begin(), id.end(), 'S');
         if (gen == target_gen)
         {
-
             Cell_Learn cell(type, id, ancestral_jump, transition, replication_history, mem);
             res.push_back(cell);
         }
@@ -2177,6 +2199,7 @@ std::vector<Cell_Learn> read_selected_generation(const std::string &file_rel_pat
 
     return res;
 }
+
 void check_ff_from_file_one_path(const int type_no, const int end_time, const int time_estimate_retro, const std::string &file_rel_path, std::ofstream &out, std::ofstream &out_detail, std::function<double(Cell_Learn)> calc_lambda, std::function<double(Cell_Learn)> calc_expected_gain, std::function<double(Cell_Learn)> calc_KL)
 //calculate gains if the cell is on the selected path
 {
@@ -2199,7 +2222,7 @@ void check_ff_from_file_one_path(const int type_no, const int end_time, const in
 
         Cell_Learn cell;
 
-        //serach a cell on the selected retrospective path
+        //search a cell on the selected retrospective path
         for (auto cell_cur : current_pop)
         {
             if (path.empty() || starts_with(path, cell_cur.id())) //at the end of lineage, we can chose arbitrary sell (path.empty())
@@ -2243,7 +2266,7 @@ void check_ff_from_file_one_path(const int type_no, const int end_time, const in
     }
 }
 
-void check_ff_thm_one_path(const std::string &setting_rel_path, const std::string &output_rel_path, const std::string &setting_for_calc_lambda_rel_path, const std::string &output_for_calc_lambda_rel_path) //only for iid env. TODO? impletemnt Markov ver.
+void check_ff_thm_one_path(const std::string &setting_rel_path, const std::string &output_rel_path, const std::string &setting_for_calc_lambda_rel_path, const std::string &output_for_calc_lambda_rel_path) //only for iid env. TODO? implement Markov ver.
 {
 
     //read paramers to define const variables
@@ -2297,6 +2320,15 @@ void check_ff_thm_one_path(const std::string &setting_rel_path, const std::strin
         }
     };
 
+    //read environment for exact learing
+    std::ifstream in_env(setting_rel_path + "//env.dat");
+    Markov_Environments env = read_env(in_env);
+    std::vector<double> Q_env;
+    for (int y = 0; y != env.cardinality(); y++)
+    {
+        Q_env.push_back(env.get_transition(0, y));
+    }
+
     //read replication for exact learning
     std::vector<std::vector<std::vector<double>>> replication;
     std::ifstream in_repl(setting_rel_path + "//replication.dat");
@@ -2317,15 +2349,6 @@ void check_ff_thm_one_path(const std::string &setting_rel_path, const std::strin
         mean_replication.push_back(mean_vec);
     }
 
-    //read environment for exact learing
-    std::ifstream in_env(setting_rel_path + "//env.dat");
-    Markov_Environments env = read_env(in_env);
-    std::vector<double> Q_env;
-    for (int y = 0; y != env.cardinality(); y++)
-    {
-        Q_env.push_back(env.get_transition(0, y));
-    }
-
     auto exact_learning = [=](int p_type, int d_type, int no_daughters, std::vector<std::vector<double>> &tran, std::vector<std::vector<double>> &jump_hist, std::vector<double> &rep_hist, std::vector<double> &mem, std::mt19937_64 &mt) {
         //always learns (mem[0] == 0 means learning occurs at this time step)
         mem[0] = 0.0;
@@ -2343,10 +2366,9 @@ void check_ff_thm_one_path(const std::string &setting_rel_path, const std::strin
         {
             std::vector<double> pi_y(type_no, 0.0);
             double normalizeation_factor = 0.0;
-            std::vector<double> pi(type_no, 0.0);
             for (int i = 0; i != type_no; i++)
             {
-                pi_y[i] = replication[y][i] * tran[0][i];
+                pi_y[i] = mean_replication[y][i] * tran[0][i];
                 normalizeation_factor += pi_y[i];
             }
 
@@ -2408,20 +2430,116 @@ void sim_6_check_ff_thm()
     //     ".//experiments//sim_6_ffthm//const_env_random_transition//calc_lambdas//res");
 
     // check_ff_thm_from_path_random_transition(
-    //     ".//experiments//sim_6_ffthm//non_const_env",
-    //     ".//experiments//sim_6_ffthm//non_const_env//res",
-    //     ".//experiments//sim_6_ffthm//non_const_env//calc_lambdas",
-    //     ".//experiments//sim_6_ffthm//non_const_env//calc_lambdas//res");
+    // ".//experiments//sim_6_ffthm//non_const_env",
+    // ".//experiments//sim_6_ffthm//non_const_env//res",
+    // ".//experiments//sim_6_ffthm//non_const_env//calc_lambdas",
+    // ".//experiments//sim_6_ffthm//non_const_env//calc_lambdas//res");
 
-    // check_ff_thm_from_path_random_transition(
-    //     ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration",
-    //     ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration//res",
-    //     ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration//calc_lambdas",
-    //     ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration//calc_lambdas//res");
+    check_ff_thm_from_path_random_transition(
+        ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration",
+        ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration//res",
+        ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration//calc_lambdas",
+        ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration//calc_lambdas//res");
 
-    check_ff_thm_one_path(
-        ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration_path",
-        ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration_path//res",
-        ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration_path//calc_lambdas",
-        ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration_path//calc_lambdas//res");
+    // check_ff_thm_one_path(
+    //     ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration_path",
+    //     ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration_path//res",
+    //     ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration_path//calc_lambdas",
+    //     ".//experiments//sim_6_ffthm//bet_hedge_plus_concentration_path//calc_lambdas//res");
+}
+
+void plot_most_learned_path_from_tree()
+{
+    std::cout << "Put the relative path to pop.dat:" << std::endl;
+    std::string pop_rel_path;
+    std::cin >> pop_rel_path;
+
+    std::cout << "Put the relative path to calc_lambdas:" << std::endl;
+    std::string calc_lambda_path;
+    std::cin >> calc_lambda_path;
+
+    std::cout << "Put the relative path to the output directory:" << std::endl;
+    std::string out_path;
+    std::cin >> out_path;
+
+    std::cout << "Put end_time:" << std::endl;
+    int end_time;
+    std::cin >> end_time;
+
+    std::vector<double> lambdas;
+    std::vector<double> pi0, pi1, pi2;
+    std::vector<double> times; //range(0, end_time + 1)
+
+    //select the most learned cell at the end of lineage
+    std::vector<Cell_Learn> last_gen = read_selected_generation(pop_rel_path, end_time, 3, true);
+
+    double max_lambda = -1.0;
+    std::string id_max_learned;
+
+    for (auto cell : last_gen)
+    {
+        const double lambda = calc_lambda(cell, calc_lambda_path, calc_lambda_path + "//res");
+        if (lambda > max_lambda)
+        {
+            max_lambda = lambda;
+            id_max_learned = cell.id();
+        }
+    }
+
+    //output necessary information on the ancestral path of the selected path (from leaf to root)
+    for (int t = 0; t <= end_time; t++)
+    {
+        std::vector<Cell_Learn> current_gen = read_selected_generation(pop_rel_path, t, 3, true);
+
+        //seek the cell on the ancestral path
+        for (auto cell : current_gen)
+        {
+            //if on the ancestral path, push_back the parameters
+            if (starts_with(id_max_learned, cell.id()))
+            {
+                const double lambda = calc_lambda(cell, calc_lambda_path, calc_lambda_path + "//res");
+                lambdas.push_back(lambda);
+
+                pi0.push_back(cell.transition[0][0]);
+                pi1.push_back(cell.transition[0][1]);
+                pi2.push_back(cell.transition[0][2]);
+
+                times.push_back(t);
+            }
+        }
+    }
+
+    //plotting
+    //std::map<std::string, std::string> args_xy{
+    //    {"label", "growth rate"}};
+    plt::plot(times, lambdas);
+
+    plt::xlabel("time");
+
+    plt::save(out_path + "/lambda.pdf");
+
+    plt::show();
+    plt::clf();
+
+    std::map<std::string, std::string> args_1{
+        {"label", "pi_0"}};
+    plt::plot(times, pi0, args_1);
+    std::map<std::string, std::string> args_2{
+        {"label", "pi_1"}};
+    plt::plot(times, pi1, args_2);
+    std::map<std::string, std::string> args_3{
+        {"label", "pi_2"}};
+    plt::plot(times, pi2, args_3);
+
+    plt::xlabel("time");
+
+    plt::legend();
+
+    plt::save(out_path + "/pi.pdf");
+
+    plt::show();
+    plt::clf();
+
+    std::ofstream out(out_path + "/lambdas.dat");
+    out_vec(lambdas, &out);
 }

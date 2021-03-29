@@ -68,7 +68,7 @@ private:
 public:
     Markov_Environments(const std::vector<std::vector<double>> &transit_mat = std::vector<std::vector<double>>(),
                         const int cardinality = 1, const std::vector<double> &initial = std::vector<double>());                                                                            //for time-homogenous Markov chain (construction from transition matrix)
-    Markov_Environments(const std::vector<std::vector<std::function<double(int)>>> &tran_func_mat, const int cardinality = 1, const std::vector<double> &initial = std::vector<double>()); //for time-inhomogenous Markov chain
+    Markov_Environments(const std::vector<std::vector<std::function<double(int)>>> &tran_func_mat, const int cardinality = 1, const std::vector<double> &initial = std::vector<double>()); //for time-inhomogeneous Markov chain
     ~Markov_Environments();
 
     virtual int current_state() const { return m_current_state; };
@@ -350,7 +350,7 @@ public:
     ~MBPRE();
 
     //run simulation
-    void excecute();
+    void execute();
 
     //set intial state
     void set_environments(Environments_base *enviornments) { env = enviornments; };

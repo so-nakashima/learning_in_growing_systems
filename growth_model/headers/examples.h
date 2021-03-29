@@ -38,6 +38,7 @@ void no_spine_learning();
 void compare_common_and_individual_learning_iid();
 void sim5_random_search_and_growth();
 void sim_6_check_ff_thm();
+void plot_most_learned_path_from_tree();
 
 template <typename T>
 void draw_learning_lineage_tree_from_simulation(std::string input_dir_relative_path, std::string output_dir_relative_path, std::function<double(T)> out_func, bool is_full_lineage_used = false)

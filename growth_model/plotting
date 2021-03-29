@@ -1,0 +1,4 @@
+./experiments/sim_5_random_search_and_growth/res/learning/pop.dat
+./experiments/sim_5_random_search_and_growth/calc_lambdas
+./experiments/sim_5_random_search_and_growth/res/learning
+50

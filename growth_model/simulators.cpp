@@ -11,7 +11,7 @@ MBPRE::~MBPRE()
 {
 }
 
-void MBPRE::excecute()
+void MBPRE::execute()
 {
     //check offspring_distributions is valid
     assert(offspring_distributions.size() == env->cardinality());
