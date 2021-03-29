@@ -1,0 +1,6 @@
+.vscode/*
+*.out
+*.dat
+growth_model/experiments/*
+*.dot
+*.png
